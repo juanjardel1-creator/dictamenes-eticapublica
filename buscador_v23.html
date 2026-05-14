@@ -288,13 +288,6 @@ mark{background:rgba(200,168,75,.25);color:var(--ac);border-radius:2px;padding:0
   .edit-group.full,.vd-campo.full{grid-column:1}
 }
 </style>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a4a7a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Dictámenes">
-<link rel="apple-touch-icon" href="icon-192.png">
-<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js")}</script>
 </head>
 <body>
 
@@ -487,6 +480,7 @@ const sb = createClient(SB_URL, SB_KEY);
 var TODOS = [], fil = [], pag = 1, PP = 20;
 var estadoGuardado = null;
 var usuarioActual = null;
+var esEditor = false;   // true = editor, false = lector (sin edición ni IA)
 var dictamenActualIdx = null;
 
 // ══════════════════════════════════════════════════
@@ -518,6 +512,11 @@ async function cerrarSesion() {
 
 function mostrarApp(user) {
   usuarioActual = user;
+
+  // Leer rol del usuario (por defecto: lector)
+  var rol = (user.user_metadata && user.user_metadata.rol) ? user.user_metadata.rol : 'lector';
+  esEditor = (rol === 'editor');
+
   var inicial = (user.email || 'U').charAt(0).toUpperCase();
   document.getElementById('user-avatar').textContent = inicial;
   document.getElementById('login-screen').style.display = 'none';
@@ -525,6 +524,17 @@ function mostrarApp(user) {
   document.getElementById('app-buscar').style.display = '';
   document.getElementById('app-main').style.display = '';
   document.getElementById('app-footer').style.display = '';
+
+  // Aplicar restricciones para lectores
+  if (!esEditor) {
+    // Ocultar botón Asistente IA
+    var btnAsistente = document.querySelector('button[onclick="abrirAsistente()"]');
+    if (btnAsistente) btnAsistente.style.display = 'none';
+    // Ocultar botón Análisis temático
+    var btnAnalisis = document.getElementById('btn-conclusion');
+    if (btnAnalisis) btnAnalisis.style.display = 'none';
+  }
+
   // Actualizar ícono según modo actual
   var claro = document.body.classList.contains('modo-claro');
   document.getElementById('btn-modo').textContent = claro ? '☀️' : '🌙';
@@ -733,7 +743,7 @@ async function abrirFicha(idx) {
     +(d.link_drive?'<a href="'+d.link_drive+'" target="_blank" class="btn btn-gh btn-sm">&#128196; Ver PDF en Drive</a>':'')
     +'<button class="btn btn-gh btn-sm" onclick="exportarPDF()">&#128438; Exportar PDF</button>'
     +'<button class="btn btn-tl btn-sm" onclick="exportarWord('+idx+')">&#128196; Exportar Word</button>'
-    +'<button class="btn btn-ve btn-sm" onclick="toggleEdicion()">&#9998; Editar</button>'
+    +(esEditor ? '<button class="btn btn-ve btn-sm" onclick="toggleEdicion()">&#9998; Editar</button>' : '')
     +'</div></div>'
     +'<div class="vd-ficha">'
     +'<div class="vd-titulo">'
@@ -762,8 +772,8 @@ async function abrirFicha(idx) {
 
   // Sección de notas
   html += '<div class="notas-section" id="notas-section"><h3>&#128221; Notas internas</h3><div id="notas-lista"><div class="loading"><div class="spin"></div> Cargando notas...</div></div>'
-    +'<div class="nota-nueva"><textarea id="nota-texto" placeholder="Escribí una nota interna sobre este dictamen..."></textarea>'
-    +'<div class="nota-nueva-actions"><button class="btn btn-tl btn-sm" onclick="guardarNota(\''+d.id+'\')">&#128228; Guardar nota</button></div>'
+    +'<div class="nota-nueva">'+(esEditor ? '<textarea id="nota-texto" placeholder="Escribí una nota interna sobre este dictamen..."></textarea>' : '<textarea id="nota-texto" style="display:none"></textarea>')
+    +'<div class="nota-nueva-actions">'+(esEditor ? '<button class="btn btn-tl btn-sm" onclick="guardarNota(\''+d.id+'\')">&#128228; Guardar nota</button>' : '')+'</div>'
     +'</div></div>';
 
   // Seguimiento
