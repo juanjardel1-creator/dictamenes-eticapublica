@@ -1767,10 +1767,11 @@ function construirStats(anioFiltro) {
   var anios = [...new Set(TODOS.map(function(d){return String(d.anio||'?');}).filter(Boolean))].sort();
 
   // Totales
-  var total = D.length;
-  var dictamenes = D.filter(function(d){return (d.tipo_documento||'')!=='Despacho';}).length;
-  var despachos  = D.filter(function(d){return (d.tipo_documento||'')==='Despacho';}).length;
-  var conLink    = D.filter(function(d){return d.link_drive;}).length;
+  var total      = D.length;
+  var dictamenes = D.filter(function(d){ return (d.tipo_documento||'')==='Dictamen'; }).length;
+  var despachos  = D.filter(function(d){ return (d.tipo_documento||'')==='Despacho'; }).length;
+  var infopub    = D.filter(function(d){ return (d.tipo_documento||'')==='Dictamen Información Pública'; }).length;
+  var conLink    = D.filter(function(d){ return d.link_drive; }).length;
 
   // Por año (solo si no hay filtro)
   var porAnio = {};
@@ -1782,7 +1783,7 @@ function construirStats(anioFiltro) {
   var maxOrg = topOrg[0]?topOrg[0][1]:1;
 
   // Resoluciones agrupadas
-  var res = {'Apertura de sumario / Investigación':0,'Archivo / Guarda temporal':0,'Seguimiento de control':0,'Requerimiento de informe':0,'Remisión / Elevación':0,'Rechazo / No avocamiento':0,'Recomendación':0,'Corrección administrativa':0,'Sin despacho registrado':0};
+  var res = {'Apertura de sumario / Investigación':0,'Archivo / Guarda temporal':0,'Corrección administrativa':0,'No avocamiento / Sin irregularidad':0,'Recomendación':0,'Rechazo':0,'Recurso por incumplimiento':0,'Remisión / Elevación':0,'Requerimiento de informe':0,'Seguimiento de control':0,'Sin despacho registrado':0};
   D.forEach(function(d){
     var r=(d.resolucion||'').toLowerCase().trim();
     if(!r) res['Sin despacho registrado']++;
@@ -1791,7 +1792,9 @@ function construirStats(anioFiltro) {
     else if(/seguimiento|control|habilitad/.test(r)) res['Seguimiento de control']++;
     else if(/requiere|requier|informe circunstanciado|solicita|corre vista/.test(r)) res['Requerimiento de informe']++;
     else if(/remit|vuelvan|eleva|notif|pase en|devolver|ofici|compulsa/.test(r)) res['Remisión / Elevación']++;
-    else if(/rechaz|in limine|no avoc|clausur|sin irregularidad|sin asidero|irreprochable|no existe incompatib|agota|concluye/.test(r)) res['Rechazo / No avocamiento']++;
+    else if(/recurso|incumplimiento|ley 9070|acceso.*informaci/.test(r)) res['Recurso por incumplimiento']++;
+    else if(/rechaz|in limine/.test(r)) res['Rechazo']++;
+    else if(/no avoc|clausur|sin irregularidad|sin asidero|irreprochable|no existe incompatib|agota|concluye/.test(r)) res['No avocamiento / Sin irregularidad']++;
     else if(/recomend|sugiere|aconsej/.test(r)) res['Recomendación']++;
     else if(/cambia|numeraci|corrij|errata/.test(r)) res['Corrección administrativa']++;
     else res['Sin despacho registrado']++;
@@ -1850,6 +1853,7 @@ function construirStats(anioFiltro) {
     +'<div class="stat-card"><div class="stat-num">'+total+'</div><div class="stat-label">Total</div></div>'
     +'<div class="stat-card"><div class="stat-num">'+dictamenes+'</div><div class="stat-label">Dictámenes</div></div>'
     +'<div class="stat-card"><div class="stat-num">'+despachos+'</div><div class="stat-label">Despachos</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+infopub+'</div><div class="stat-label">Inf. Pública</div></div>'
     +'<div class="stat-card"><div class="stat-num">'+conLink+'</div><div class="stat-label">Con PDF en Drive</div></div>'
     +'</div>';
 
