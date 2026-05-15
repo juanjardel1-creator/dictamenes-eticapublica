@@ -632,12 +632,21 @@ function mostrarApp(user) {
 // CARGA DE DATOS DESDE SUPABASE
 // ══════════════════════════════════════════════════
 async function cargarDictamenes() {
-  var { data, error } = await sb.from('dictamenes').select('*').order('anio', { ascending: false }).order('numero_dictamen', { ascending: false });
-  if (error) {
-    document.getElementById('res').innerHTML = '<div class="empty"><div class="ic">⚠️</div><h3>Error al cargar</h3><p>' + error.message + '</p></div>';
-    return;
+  var todos = [], desde = 0, tamano = 1000;
+  while (true) {
+    var { data, error } = await sb.from('dictamenes').select('*')
+      .order('anio', { ascending: false })
+      .order('numero_dictamen', { ascending: false })
+      .range(desde, desde + tamano - 1);
+    if (error) {
+      document.getElementById('res').innerHTML = '<div class="empty"><div class="ic">⚠️</div><h3>Error al cargar</h3><p>' + error.message + '</p></div>';
+      return;
+    }
+    todos = todos.concat(data || []);
+    if (!data || data.length < tamano) break;
+    desde += tamano;
   }
-  TODOS = data || [];
+  TODOS = todos;
   document.getElementById('pill-total').textContent = TODOS.length + ' dictámenes';
   // Años únicos
   var anios = [...new Set(TODOS.map(d => d.anio).filter(Boolean))].sort((a,b)=>a-b);
