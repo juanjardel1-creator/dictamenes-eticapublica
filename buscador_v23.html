@@ -56,6 +56,8 @@ header{background:linear-gradient(135deg,#060e10,#0d1e22,#0a1518);border-bottom:
 .si{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
 .sr{display:flex;gap:10px}
 .sb{flex:1;position:relative}
+.sb-modo select{background:var(--g2);border:1.5px solid var(--g3);border-radius:8px;padding:9px 12px;font-size:.82rem;color:var(--t2);font-family:inherit;cursor:pointer;outline:none;white-space:nowrap}
+.sb-modo select:focus{border-color:var(--teal)}
 .sb input{width:100%;background:var(--g2);border:1.5px solid var(--g3);border-radius:8px;padding:11px 16px 11px 42px;font-size:.95rem;color:var(--bl);font-family:inherit;outline:none;transition:border-color .2s}
 .sb input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(26,138,155,.15)}
 .sb input::placeholder{color:var(--g4)}
@@ -345,7 +347,14 @@ mark{background:rgba(200,168,75,.25);color:var(--ac);border-radius:2px;padding:0
     <div class="sr">
       <div class="sb">
         <span class="ico">&#128269;</span>
-        <input type="text" id="q" placeholder="Buscar por tema, denunciante, denunciado, organismo, normativa..." autocomplete="off">
+        <input type="text" id="q" placeholder="Buscar..." autocomplete="off">
+      </div>
+      <div class="sb-modo">
+        <select id="modo-busqueda" title="Modo de búsqueda" onchange="actualizarPlaceholder()">
+          <option value="frase">Frase exacta</option>
+          <option value="todas">Todas las palabras</option>
+          <option value="alguna">Alguna palabra</option>
+        </select>
       </div>
       <button class="btn btn-gh" onclick="limpiar()">&#10005; Limpiar</button>
     </div>
@@ -355,19 +364,20 @@ mark{background:rgba(200,168,75,.25);color:var(--ac);border-radius:2px;padding:0
         <option value="">Todos los tipos</option>
         <option value="Dictamen">Solo Dictámenes</option>
         <option value="Despacho">Solo Despachos</option>
-        <option value="Resolución Ticket">Solo Resoluciones Ticket</option>
+        <option value="Dictamen Información Pública">Información Pública</option>
       </select>
       <select id="fr3">
         <option value="">Despacho del Auditor (todos)</option>
         <option value="apertura|sumario|investigaci|instrucci">Apertura de sumario / Investigación</option>
         <option value="archiv|guarda temporal|reserva">Archivo / Guarda temporal</option>
-        <option value="seguimiento|control|habilitad">Seguimiento de control</option>
-        <option value="requiere|requier|informe circunstanciado|solicita|corre vista">Requerimiento de informe</option>
-        <option value="remit|vuelvan|eleva|notif|pase en|devolver|ofici|compulsa">Remisión / Elevación</option>
-        <option value="rechaz|in limine">Rechazo</option>
+        <option value="cambia|numeraci|corrij|errata">Corrección administrativa</option>
         <option value="no avoc|no se avoc|no avoque|sin irregularidad|clausur|sin asidero|irreprochable|no existe incompatib|agota|concluye">No avocamiento / Sin irregularidad</option>
         <option value="recomend|sugiere|aconsej">Recomendación</option>
-        <option value="cambia|numeraci|corrij|errata">Corrección administrativa</option>
+        <option value="rechaz|in limine">Rechazo</option>
+        <option value="remit|vuelvan|eleva|notif|pase en|devolver|ofici|compulsa">Remisión / Elevación</option>
+        <option value="requiere|requier|informe circunstanciado|solicita|corre vista">Requerimiento de informe</option>
+        <option value="recurso|incumplimiento|ley 9070|acceso.*informaci|informaci.*acceso">Recurso por incumplimiento</option>
+        <option value="seguimiento|control|habilitad">Seguimiento de control</option>
         <option value="__vacio__">Sin despacho registrado</option>
       </select>
       <button class="btn btn-ac" id="btn-conclusion" onclick="abrirModalConclusion()" disabled style="opacity:.4;cursor:not-allowed">&#9878; Análisis temático</button>
@@ -544,17 +554,28 @@ async function cargarDictamenes() {
   // Listeners
   document.getElementById('q').addEventListener('input', function(){ pag=1; buscar(); });
   ['fa','ft','fr3'].forEach(function(id){ document.getElementById(id).addEventListener('change', function(){ pag=1; buscar(); }); });
+  document.getElementById('modo-busqueda').addEventListener('change', function(){ pag=1; buscar(); });
   buscar();
 }
 
 // ══════════════════════════════════════════════════
 // BÚSQUEDA Y FILTROS
 // ══════════════════════════════════════════════════
+function actualizarPlaceholder() {
+  var modo = document.getElementById('modo-busqueda').value;
+  var q = document.getElementById('q');
+  if (modo === 'frase') q.placeholder = 'Buscar frase exacta...';
+  else if (modo === 'todas') q.placeholder = 'Todas las palabras (separadas por espacio)...';
+  else q.placeholder = 'Alguna de las palabras (separadas por espacio)...';
+  buscar();
+}
+
 function buscar() {
-  var q  = document.getElementById('q').value.toLowerCase().trim();
-  var an = document.getElementById('fa').value;
-  var ti = document.getElementById('ft').value;
-  var re = document.getElementById('fr3').value;
+  var q    = document.getElementById('q').value.toLowerCase().trim();
+  var modo = document.getElementById('modo-busqueda').value;
+  var an   = document.getElementById('fa').value;
+  var ti   = document.getElementById('ft').value;
+  var re   = document.getElementById('fr3').value;
   fil = TODOS.filter(function(d) {
     if (an && String(d.anio||'') !== an) return false;
     if (ti && (d.tipo_documento||'') !== ti) return false;
@@ -565,7 +586,7 @@ function buscar() {
       } else {
         var pats = re.split('|');
         var match = pats.some(function(p){ return rv.includes(p); });
-        if(!match) return false;
+        if (!match) return false;
       }
     }
     if (!q) return true;
@@ -574,7 +595,13 @@ function buscar() {
              d.firmantes, d.expediente_interno, d.expediente_electronico,
              d.caratula, d.tags, d.seguimiento_nota,
              String(d.numero_dictamen||''), String(d.anio||'')].join(' ').toLowerCase();
-    return q.split(' ').every(function(p){ return h.includes(p); });
+    if (modo === 'frase') {
+      return h.includes(q);
+    } else if (modo === 'todas') {
+      return q.split(/\s+/).every(function(p){ return h.includes(p); });
+    } else { // alguna
+      return q.split(/\s+/).some(function(p){ return h.includes(p); });
+    }
   });
   document.getElementById('pan').classList.remove('show');
   seleccionados.clear();
@@ -695,6 +722,8 @@ function gp(n){ pag=n; seleccionados.clear(); render(); window.scrollTo({top:0,b
 function limpiar(){
   document.getElementById('q').value='';
   ['fa','ft','fr3'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('modo-busqueda').value = 'frase';
+  actualizarPlaceholder();
   document.getElementById('pan').classList.remove('show');
   pag=1; buscar();
 }
@@ -862,9 +891,8 @@ async function guardarEdicion(dictamenId, idx) {
   }; });
   await sb.from('ediciones').insert(registros);
 
-  // Actualizar local
+  // Actualizar local y cerrar formulario
   historial.forEach(function(h){ TODOS[idx][h.campo] = h.nuevo; });
-  // Cerrar formulario y refrescar ficha
   toggleEdicion();
   abrirFicha(idx);
 }
