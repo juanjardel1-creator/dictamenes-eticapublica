@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Buscador de Dictámenes — Ética Pública Mendoza</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 /* ── VARIABLES ── */
 :root{
@@ -248,29 +249,75 @@ mark{background:rgba(200,168,75,.25);color:var(--ac);border-radius:2px;padding:0
 .hist-viejo{color:#e74c3c;text-decoration:line-through;opacity:.75;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hist-nuevo{color:#2ecc71;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ── ESTADÍSTICAS ── */
-#stats-view{display:none}
-.stats-header{display:flex;align-items:center;gap:14px;margin-bottom:22px;flex-wrap:wrap}
-.stats-header h2{font-family:Georgia,serif;font-size:1.35rem;color:var(--bl);flex:1}
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:24px}
+/* ── ESTADÍSTICAS ── */
+#stats-view{display:none;background:var(--negro);min-height:calc(100vh - 80px)}
+.btn-stats{background:transparent;border:1.5px solid var(--to);border-radius:8px;padding:7px 14px;font-size:.78rem;color:var(--tl);cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;gap:5px}
+.btn-stats:hover,.btn-stats.active{background:rgba(26,138,155,.12);border-color:var(--teal)}
+/* Header estadísticas */
+.st-topbar{background:linear-gradient(135deg,#060e10,#0d1e22);border-bottom:2px solid var(--to);padding:14px 28px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.st-topbar h2{font-family:Georgia,serif;font-size:1.2rem;color:var(--bl);flex:1}
+.st-topbar-actions{display:flex;gap:8px;align-items:center}
+/* Filtros */
+.st-filtros{background:var(--g1);border-bottom:1px solid var(--g3);padding:14px 28px}
+.st-filtros-inner{max-width:1280px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.st-filtros-inner label{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tl);display:block;margin-bottom:4px;font-weight:600}
+.st-filtros-inner select,.st-filtros-inner input{background:var(--g2);border:1.5px solid var(--g3);border-radius:7px;padding:8px 12px;font-size:.84rem;color:var(--tx);font-family:inherit;outline:none;min-width:160px}
+.st-filtros-inner select:focus,.st-filtros-inner input:focus{border-color:var(--teal)}
+.st-filtro-grupo{display:flex;flex-direction:column}
+.st-badge-contexto{background:rgba(26,138,155,.12);border:1px solid rgba(26,138,155,.3);border-radius:20px;padding:4px 14px;font-size:.74rem;color:var(--tl);align-self:flex-end;white-space:nowrap}
+/* Cuerpo principal */
+.st-body{max-width:1280px;margin:0 auto;padding:20px 28px}
+/* Tarjetas resumen */
+.st-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:22px}
+.st-kpi{background:var(--g1);border:1px solid var(--g3);border-radius:10px;padding:18px 20px;text-align:center;position:relative;overflow:hidden}
+.st-kpi::after{content:"";position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--teal)}
+.st-kpi.ac::after{background:var(--ac)}
+.st-kpi.ro::after{background:var(--ro)}
+.st-kpi.ve::after{background:var(--ve)}
+.st-kpi-num{font-family:Georgia,serif;font-size:2.1rem;color:var(--tl);font-weight:700;line-height:1}
+.st-kpi.ac .st-kpi-num{color:var(--ac)}
+.st-kpi.ro .st-kpi-num{color:var(--ro)}
+.st-kpi.ve .st-kpi-num{color:var(--ve)}
+.st-kpi-label{font-size:.68rem;color:var(--t2);margin-top:5px;text-transform:uppercase;letter-spacing:.08em}
+/* Grilla de módulos */
+.st-modulos{display:grid;grid-template-columns:repeat(auto-fit,minmax(480px,1fr));gap:16px}
+.st-modulo{background:var(--g1);border:1px solid var(--g3);border-radius:12px;overflow:hidden}
+.st-modulo.ancho{grid-column:1/-1}
+.st-mod-header{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--g3)}
+.st-mod-header h3{font-family:Georgia,serif;font-size:.92rem;color:var(--bl);flex:1}
+.st-mod-tipo{display:flex;gap:4px}
+.st-mod-tipo button,.st-mod-tipo-btn{background:var(--g2);border:1px solid var(--g3);border-radius:5px;padding:4px 9px;font-size:.7rem;color:var(--t2);cursor:pointer;font-family:inherit;transition:all .15s}
+.st-mod-tipo button.on,.st-mod-tipo-btn.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.st-mod-tipo button:hover:not(.on),.st-mod-tipo-btn:hover:not(.on){border-color:var(--teal);color:var(--tl)}
+.st-mod-body{padding:16px 18px;position:relative;min-height:220px}
+.st-canvas-wrap{position:relative;width:100%;height:280px}
+.st-canvas-wrap canvas{width:100%!important;height:100%!important}
+/* Tabla en módulo */
+.st-tabla{width:100%;border-collapse:collapse;font-size:.8rem}
+.st-tabla th{text-align:left;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tl);padding:6px 10px;border-bottom:1px solid var(--g3)}
+.st-tabla td{padding:7px 10px;border-bottom:1px solid var(--g2);color:var(--tx);vertical-align:middle}
+.st-tabla tr:last-child td{border-bottom:none}
+.st-tabla tr:hover td{background:var(--g2)}
+.st-tabla .st-rank{font-family:monospace;color:var(--g4);font-size:.72rem;width:28px}
+.st-tabla .st-bar-inline{height:6px;background:var(--teal);border-radius:3px;min-width:4px}
+/* Estado vacío módulo */
+.st-vacio{display:flex;align-items:center;justify-content:center;height:200px;color:var(--g4);font-size:.84rem;font-style:italic}
+/* Modal exportar */
+.st-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.st-modal{background:var(--g1);border:1.5px solid var(--to);border-radius:14px;padding:28px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto}
+.st-modal h3{font-family:Georgia,serif;font-size:1.05rem;color:var(--bl);margin-bottom:5px}
+.st-modal p.sub{font-size:.78rem;color:var(--t2);margin-bottom:18px}
+.st-modal-section{margin-bottom:14px}
+.st-modal-section label.group-label{display:block;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tl);font-weight:600;margin-bottom:8px}
+.st-check-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;cursor:pointer;transition:background .15s}
+.st-check-item:hover{background:var(--g2)}
+.st-check-item input{width:16px;height:16px;accent-color:var(--teal);cursor:pointer}
+.st-check-item span{font-size:.86rem;color:var(--tx)}
+.st-modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--g3)}
+/* Indicador sin datos */
 .stat-card{background:var(--g1);border:1px solid var(--g3);border-radius:10px;padding:20px;text-align:center}
 .stat-num{font-family:Georgia,serif;font-size:2rem;color:var(--tl);font-weight:700;line-height:1}
 .stat-label{font-size:.72rem;color:var(--t2);margin-top:6px;text-transform:uppercase;letter-spacing:.08em}
-.stats-section{background:var(--g1);border:1px solid var(--g3);border-radius:10px;padding:20px;margin-bottom:16px}
-.stats-section h3{font-family:Georgia,serif;font-size:.95rem;color:var(--bl);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--g3)}
-.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;min-width:0}
-.bar-label{font-size:.78rem;color:var(--t2);width:220px;min-width:220px;max-width:220px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
-.bar-wrap{flex:1;min-width:0;background:var(--g2);border-radius:4px;height:22px;overflow:hidden}
-.bar-fill{height:100%;background:var(--teal);border-radius:4px;transition:width .6s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;min-width:28px}
-.bar-fill span{font-size:.7rem;color:#fff;font-weight:700;white-space:nowrap}
-.bar-fill.ac{background:var(--ac)}
-.bar-fill.ro{background:rgba(192,57,43,.75)}
-.bar-fill.ve{background:rgba(39,174,96,.75)}
-.seg-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
-.seg-sum-item{background:var(--g2);border-radius:8px;padding:14px;text-align:center}
-.seg-sum-num{font-size:1.5rem;font-weight:700;font-family:Georgia,serif}
-.seg-sum-label{font-size:.7rem;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
-.btn-stats{background:transparent;border:1.5px solid var(--to);border-radius:8px;padding:7px 14px;font-size:.78rem;color:var(--tl);cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;gap:5px}
-.btn-stats:hover,.btn-stats.active{background:rgba(26,138,155,.12);border-color:var(--teal)}
 
 /* ── SELECCIÓN PARA COMPARAR ── */
 .card-check{position:absolute;top:12px;right:12px;width:20px;height:20px;accent-color:var(--teal);cursor:pointer;z-index:2}
@@ -400,8 +447,52 @@ mark{background:rgba(200,168,75,.25);color:var(--ac);border-radius:2px;padding:0
     </div>
   </div>
 
-  <!-- Vista estadísticas -->
-  <div id="stats-view"></div>
+<!-- ══ ESTADÍSTICAS ══ -->
+<div id="stats-view">
+  <!-- Header propio -->
+  <div class="st-topbar">
+    <button class="btn btn-gh" onclick="toggleStats()">&#8592; Volver al buscador</button>
+    <h2>📊 Estadísticas institucionales</h2>
+    <div class="st-topbar-actions">
+      <button class="btn btn-gh" onclick="abrirModalExportPDF()">&#128438; Exportar PDF</button>
+    </div>
+  </div>
+  <!-- Filtros de contexto -->
+  <div class="st-filtros">
+    <div class="st-filtros-inner">
+      <div class="st-filtro-grupo">
+        <label>Período</label>
+        <select id="st-f-anio" onchange="renderStats()">
+          <option value="">Todos los años</option>
+        </select>
+      </div>
+      <div class="st-filtro-grupo">
+        <label>Tipo de documento</label>
+        <select id="st-f-tipo" onchange="renderStats()">
+          <option value="">Todos los tipos</option>
+          <option value="Dictamen">Dictámenes</option>
+          <option value="Despacho">Despachos</option>
+          <option value="Dictamen Información Pública">Información Pública</option>
+          <option value="Providencia">Providencias</option>
+        </select>
+      </div>
+      <div class="st-filtro-grupo">
+        <label>Repartición</label>
+        <select id="st-f-org" onchange="renderStats()" style="min-width:220px">
+          <option value="">Todas las reparticiones</option>
+        </select>
+      </div>
+      <div class="st-filtro-grupo">
+        <label>Texto en tema / resolución</label>
+        <input type="text" id="st-f-texto" placeholder="Ej: incompatibilidad..." oninput="renderStats()" style="min-width:200px">
+      </div>
+      <button class="btn btn-gh" onclick="limpiarFiltrosStats()">&#10005; Limpiar filtros</button>
+      <div class="st-badge-contexto" id="st-badge"></div>
+    </div>
+  </div>
+  <!-- Cuerpo -->
+  <div class="st-body" id="st-body"></div>
+</div>
 
   <!-- Lista -->
   <div id="lista-wrap">
@@ -1627,25 +1718,598 @@ async function cargarHistorial(dictamenId) {
 // ══════════════════════════════════════════════════
 // ESTADÍSTICAS
 // ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// ESTADÍSTICAS — SISTEMA CONFIGURABLE v2
+// ══════════════════════════════════════════════════
+
+var stCharts = {}; // registro de instancias Chart.js activas
+
+// Paletas de colores para Chart.js (modo oscuro)
+var ST_COLORES = [
+  '#1a8a9b','#c8a84b','#27ae60','#e67e22','#8e44ad',
+  '#2980b9','#c0392b','#16a085','#d35400','#7f8c8d'
+];
+
+function stGetDatos() {
+  var anio  = document.getElementById('st-f-anio')  ? document.getElementById('st-f-anio').value  : '';
+  var tipo  = document.getElementById('st-f-tipo')  ? document.getElementById('st-f-tipo').value  : '';
+  var org   = document.getElementById('st-f-org')   ? document.getElementById('st-f-org').value   : '';
+  var texto = document.getElementById('st-f-texto') ? norm(document.getElementById('st-f-texto').value.trim()) : '';
+  return TODOS.filter(function(d) {
+    if (anio  && String(d.anio||'') !== anio) return false;
+    if (tipo  && (d.tipo_documento||'') !== tipo) return false;
+    if (org   && normalizarOrganismo(d.organismo||'') !== org) return false;
+    if (texto) {
+      var haystack = norm([d.tema_principal,d.tema_secundario,d.resolucion,d.observaciones].join(' '));
+      if (!haystack.includes(texto)) return false;
+    }
+    return true;
+  });
+}
+
+function stDestruirCharts() {
+  Object.keys(stCharts).forEach(function(k) {
+    try { stCharts[k].destroy(); } catch(e) {}
+  });
+  stCharts = {};
+}
+
+function stCrearChart(canvasId, tipo, labels, datasets, opciones) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  var esModoClaro = document.body.classList.contains('modo-claro');
+  var colorTexto  = esModoClaro ? '#1a2e33' : '#d4e4e8';
+  var colorGrid   = esModoClaro ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.07)';
+  var defaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: colorTexto, font: { size: 11 }, padding: 12 } },
+      tooltip: { backgroundColor: '#0d1e22', titleColor: '#24afc4', bodyColor: '#d4e4e8', borderColor: '#1a8a9b', borderWidth: 1 }
+    },
+    scales: (tipo === 'pie' || tipo === 'doughnut') ? {} : {
+      x: { ticks: { color: colorTexto, font:{size:10} }, grid: { color: colorGrid } },
+      y: { ticks: { color: colorTexto, font:{size:10} }, grid: { color: colorGrid }, beginAtZero: true }
+    }
+  };
+  var config = { type: tipo, data: { labels: labels, datasets: datasets }, options: Object.assign(defaults, opciones||{}) };
+  stCharts[canvasId] = new Chart(canvas, config);
+}
+
+// ── Módulo genérico ──────────────────────────────────
+function stModulo(id, titulo, emoji, tiposDisponibles, tipoActivo, fnRender, ancho) {
+  var btnsTipo = tiposDisponibles.map(function(t) {
+    var labels = {barras:'▬ Barras', torta:'◉ Torta', donut:'◎ Donut', linea:'↗ Línea', tabla:'≡ Tabla', indicadores:'# Indicadores'};
+    return '<button class="st-mod-tipo-btn'+(t===tipoActivo?' on':'')+'" onclick="stCambiarTipo(\''+id+'\',\''+t+'\')" data-mod="'+id+'">'+( labels[t]||t)+'</button>';
+  }).join('');
+  return '<div class="st-modulo'+(ancho?' ancho':'')+'" id="mod-'+id+'">'
+    +'<div class="st-mod-header">'
+    +'<h3>'+emoji+' '+titulo+'</h3>'
+    +'<div class="st-mod-tipo">'+btnsTipo+'</div>'
+    +'</div>'
+    +'<div class="st-mod-body" id="mod-body-'+id+'"><div class="st-canvas-wrap"><canvas id="canvas-'+id+'"></canvas></div></div>'
+    +'</div>';
+}
+
+var stTiposActivos = {
+  anio: 'barras', tipo: 'torta', despacho: 'barras',
+  organismo: 'barras', normativa: 'barras', seguimiento: 'donut', evolucion: 'linea'
+};
+
+function stCambiarTipo(modId, tipo) {
+  stTiposActivos[modId] = tipo;
+  // Actualizar botones
+  var btns = document.querySelectorAll('[data-mod="'+modId+'"]');
+  btns.forEach(function(b){ b.classList.toggle('on', b.textContent.toLowerCase().includes(tipo.substring(0,3)) || b.getAttribute('onclick').includes("'"+tipo+"'")); });
+  // Re-renderizar solo ese módulo
+  var datos = stGetDatos();
+  var fn = stModRenderers[modId];
+  if (fn) fn(datos, tipo);
+}
+
+var stModRenderers = {};
+
+// ── Renderizadores por módulo ────────────────────────
+
+function stRenderAnio(datos, tipo) {
+  if(stCharts['canvas-anio']) { try{stCharts['canvas-anio'].destroy();}catch(e){} }
+  var cnt = {}; datos.forEach(function(d){ var a=String(d.anio||'?'); cnt[a]=(cnt[a]||0)+1; });
+  var anios = Object.keys(cnt).sort();
+  var vals  = anios.map(function(a){return cnt[a];});
+  var body  = document.getElementById('mod-body-anio');
+  if (!anios.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+  if (tipo === 'tabla') {
+    body.innerHTML = '<table class="st-tabla"><thead><tr><th>#</th><th>Año</th><th>Cantidad</th><th>Distribución</th></tr></thead><tbody>'
+      +anios.map(function(a,i){
+        var pct = Math.round(cnt[a]/datos.length*100);
+        return '<tr><td class="st-rank">'+(i+1)+'</td><td>'+a+'</td><td><b>'+cnt[a]+'</b></td>'
+          +'<td><div class="st-bar-inline" style="width:'+Math.max(4,pct)+'px;background:var(--teal)"></div> '+pct+'%</td></tr>';
+      }).join('')+'</tbody></table>';
+    return;
+  }
+  body.innerHTML = '<div class="st-canvas-wrap"><canvas id="canvas-anio"></canvas></div>';
+  stCrearChart('canvas-anio', tipo==='linea'?'line':'bar', anios, [{
+    label: 'Documentos', data: vals,
+    backgroundColor: tipo==='linea' ? 'rgba(26,138,155,.2)' : ST_COLORES,
+    borderColor: tipo==='linea' ? '#1a8a9b' : ST_COLORES,
+    borderWidth: 2, fill: tipo==='linea', tension: 0.4, pointBackgroundColor: '#1a8a9b'
+  }], { plugins: { legend: { display: false } } });
+}
+
+function stRenderTipo(datos, tipo) {
+  if(stCharts['canvas-tipo']) { try{stCharts['canvas-tipo'].destroy();}catch(e){} }
+  var cnt = {}; datos.forEach(function(d){ var t=d.tipo_documento||'Sin tipo'; cnt[t]=(cnt[t]||0)+1; });
+  var labels = Object.keys(cnt); var vals = labels.map(function(k){return cnt[k];});
+  var body = document.getElementById('mod-body-tipo');
+  if (!labels.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+  if (tipo === 'tabla') {
+    body.innerHTML = '<table class="st-tabla"><thead><tr><th>Tipo</th><th>Cantidad</th><th>%</th></tr></thead><tbody>'
+      +labels.sort(function(a,b){return cnt[b]-cnt[a];}).map(function(l){
+        return '<tr><td>'+l+'</td><td><b>'+cnt[l]+'</b></td><td>'+Math.round(cnt[l]/datos.length*100)+'%</td></tr>';
+      }).join('')+'</tbody></table>';
+    return;
+  }
+  body.innerHTML = '<div class="st-canvas-wrap"><canvas id="canvas-tipo"></canvas></div>';
+  var ct = (tipo==='torta')?'pie':'doughnut';
+  stCrearChart('canvas-tipo', ct, labels, [{data:vals,backgroundColor:ST_COLORES,borderWidth:2,borderColor:'#0d1e22'}]);
+}
+
+function stRenderDespacho(datos, tipo) {
+  if(stCharts['canvas-despacho']) { try{stCharts['canvas-despacho'].destroy();}catch(e){} }
+  var res = {'Apertura de sumario / Investigación':0,'Archivo / Guarda temporal':0,'Corrección administrativa':0,
+    'No avocamiento / Sin irregularidad':0,'Recomendación':0,'Rechazo':0,'Recurso por incumplimiento':0,
+    'Remisión / Elevación':0,'Requerimiento de informe':0,'Seguimiento de control':0,'Sin despacho registrado':0};
+  datos.forEach(function(d){
+    var r=(d.resolucion||'').toLowerCase().trim();
+    if(!r) res['Sin despacho registrado']++;
+    else if(/archiv|guarda temporal|reserva/.test(r)) res['Archivo / Guarda temporal']++;
+    else if(/sumario|investigaci|apertura|instrucci/.test(r)) res['Apertura de sumario / Investigación']++;
+    else if(/seguimiento|control|habilitad/.test(r)) res['Seguimiento de control']++;
+    else if(/requiere|requier|informe circunstanciado|solicita|corre vista/.test(r)) res['Requerimiento de informe']++;
+    else if(/remit|vuelvan|eleva|notif|pase en|devolver|ofici|compulsa/.test(r)) res['Remisión / Elevación']++;
+    else if(/recurso|incumplimiento|ley 9070|acceso.*informaci/.test(r)) res['Recurso por incumplimiento']++;
+    else if(/rechaz|in limine/.test(r)) res['Rechazo']++;
+    else if(/no avoc|clausur|sin irregularidad|sin asidero|irreprochable|no existe incompatib|agota|concluye/.test(r)) res['No avocamiento / Sin irregularidad']++;
+    else if(/recomend|sugiere|aconsej/.test(r)) res['Recomendación']++;
+    else if(/cambia|numeraci|corrij|errata/.test(r)) res['Corrección administrativa']++;
+    else res['Sin despacho registrado']++;
+  });
+  var entries = Object.entries(res).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];});
+  var labels = entries.map(function(e){return e[0];}); var vals = entries.map(function(e){return e[1];});
+  var body = document.getElementById('mod-body-despacho');
+  if (!entries.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+  if (tipo === 'tabla') {
+    body.innerHTML = '<table class="st-tabla"><thead><tr><th>#</th><th>Categoría</th><th>Cantidad</th></tr></thead><tbody>'
+      +entries.map(function(e,i){return '<tr><td class="st-rank">'+(i+1)+'</td><td>'+e[0]+'</td><td><b>'+e[1]+'</b></td></tr>';}).join('')
+      +'</tbody></table>';
+    return;
+  }
+  body.innerHTML = '<div class="st-canvas-wrap" style="height:320px"><canvas id="canvas-despacho"></canvas></div>';
+  if (tipo === 'torta' || tipo === 'donut') {
+    stCrearChart('canvas-despacho', tipo==='torta'?'pie':'doughnut', labels, [{data:vals,backgroundColor:ST_COLORES,borderWidth:2,borderColor:'#0d1e22'}]);
+  } else {
+    // Barras horizontales
+    stCrearChart('canvas-despacho', 'bar', labels, [{
+      label:'Dictámenes', data:vals, backgroundColor:'rgba(26,138,155,.75)', borderColor:'#1a8a9b', borderWidth:1
+    }], { indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{color:'#8fadb5',font:{size:9}}},y:{ticks:{color:'#8fadb5',font:{size:9}}}} });
+  }
+}
+
+function stRenderOrganismo(datos, tipo) {
+  if(stCharts['canvas-organismo']) { try{stCharts['canvas-organismo'].destroy();}catch(e){} }
+  var cnt = {};
+  datos.forEach(function(d){ var o=normalizarOrganismo(d.organismo||''); cnt[o]=(cnt[o]||0)+1; });
+  var entries = Object.entries(cnt).sort(function(a,b){return b[1]-a[1];}).slice(0,15);
+  var labels = entries.map(function(e){return e[0];}); var vals = entries.map(function(e){return e[1];});
+  var body = document.getElementById('mod-body-organismo');
+  if (!entries.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+  if (tipo === 'tabla') {
+    var maxVal = vals[0]||1;
+    body.innerHTML = '<table class="st-tabla"><thead><tr><th>#</th><th>Repartición</th><th>Cantidad</th><th>Dist.</th></tr></thead><tbody>'
+      +entries.map(function(e,i){
+        var pct=Math.round(e[1]/datos.length*100);
+        return '<tr><td class="st-rank">'+(i+1)+'</td><td title="'+esc(e[0])+'">'+esc(e[0].length>50?e[0].substring(0,48)+'…':e[0])+'</td>'
+          +'<td><b>'+e[1]+'</b></td><td><div class="st-bar-inline" style="width:'+Math.max(4,Math.round(e[1]/maxVal*80))+'px"></div> '+pct+'%</td></tr>';
+      }).join('')+'</tbody></table>';
+    return;
+  }
+  body.innerHTML = '<div class="st-canvas-wrap" style="height:'+Math.max(280,entries.length*32)+'px"><canvas id="canvas-organismo"></canvas></div>';
+  // Abreviar labels largos
+  var labelsCortos = labels.map(function(l){return l.length>40?l.substring(0,38)+'…':l;});
+  stCrearChart('canvas-organismo', 'bar', labelsCortos, [{
+    label:'Documentos', data:vals, backgroundColor:'rgba(26,138,155,.75)', borderColor:'#1a8a9b', borderWidth:1
+  }], { indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{color:'#8fadb5',font:{size:9}}},y:{ticks:{color:'#8fadb5',font:{size:9}}}} });
+}
+
+function stRenderNormativa(datos, tipo) {
+  if(stCharts['canvas-normativa']) { try{stCharts['canvas-normativa'].destroy();}catch(e){} }
+  var cnt = {};
+  datos.forEach(function(d){
+    (d.normativa||'').split(',').forEach(function(n){
+      var nn=normalizarNorma(n.trim()); if(nn){cnt[nn]=(cnt[nn]||0)+1;}
+    });
+  });
+  var entries = Object.entries(cnt).sort(function(a,b){return b[1]-a[1];}).slice(0,12);
+  var labels = entries.map(function(e){return e[0];}); var vals = entries.map(function(e){return e[1];});
+  var body = document.getElementById('mod-body-normativa');
+  if (!entries.length) { body.innerHTML='<div class="st-vacio">Sin datos de normativa</div>'; return; }
+  if (tipo === 'tabla') {
+    body.innerHTML = '<table class="st-tabla"><thead><tr><th>#</th><th>Norma</th><th>Citas</th></tr></thead><tbody>'
+      +entries.map(function(e,i){return '<tr><td class="st-rank">'+(i+1)+'</td><td>'+esc(e[0])+'</td><td><b>'+e[1]+'</b></td></tr>';}).join('')
+      +'</tbody></table>';
+    return;
+  }
+  body.innerHTML = '<div class="st-canvas-wrap" style="height:'+Math.max(280,entries.length*32)+'px"><canvas id="canvas-normativa"></canvas></div>';
+  var labelsCortos = labels.map(function(l){return l.length>45?l.substring(0,43)+'…':l;});
+  stCrearChart('canvas-normativa', 'bar', labelsCortos, [{
+    label:'Citas', data:vals, backgroundColor:'rgba(200,168,75,.75)', borderColor:'#c8a84b', borderWidth:1
+  }], { indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{color:'#8fadb5',font:{size:9}}},y:{ticks:{color:'#8fadb5',font:{size:9}}}} });
+}
+
+function stRenderSeguimiento(datos, tipo) {
+  if(stCharts['canvas-seguimiento']) { try{stCharts['canvas-seguimiento'].destroy();}catch(e){} }
+  var seg = {pendiente:0, cumplido:0, sin_respuesta:0, sin_asignar:0};
+  datos.forEach(function(d){ var s=d.seguimiento||'sin_asignar'; if(seg[s]!==undefined) seg[s]++; });
+  var coloresSeg = {'pendiente':'#e67e22','cumplido':'#27ae60','sin_respuesta':'#c0392b','sin_asignar':'#7f8c8d'};
+  var etiquetas  = {'pendiente':'⏳ Pendiente','cumplido':'✅ Cumplido','sin_respuesta':'❌ Sin respuesta','sin_asignar':'— Sin asignar'};
+  var labels = Object.keys(seg); var vals = labels.map(function(k){return seg[k];});
+  var body = document.getElementById('mod-body-seguimiento');
+  if (tipo === 'indicadores') {
+    body.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:8px 0">'
+      +labels.map(function(k){
+        return '<div style="background:var(--g2);border-radius:8px;padding:16px;text-align:center;border-bottom:3px solid '+coloresSeg[k]+'">'
+          +'<div style="font-size:1.9rem;font-weight:700;color:'+coloresSeg[k]+';font-family:Georgia,serif">'+seg[k]+'</div>'
+          +'<div style="font-size:.68rem;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.06em">'+etiquetas[k].replace(/^[^ ]+ /,'')+'</div>'
+          +'</div>';
+      }).join('')+'</div>';
+    return;
+  }
+  if (tipo === 'tabla') {
+    body.innerHTML = '<table class="st-tabla"><thead><tr><th>Estado</th><th>Cantidad</th><th>%</th></tr></thead><tbody>'
+      +labels.map(function(k){return '<tr><td>'+etiquetas[k]+'</td><td><b>'+seg[k]+'</b></td><td>'+Math.round(seg[k]/datos.length*100)+'%</td></tr>';}).join('')
+      +'</tbody></table>';
+    return;
+  }
+  body.innerHTML = '<div class="st-canvas-wrap"><canvas id="canvas-seguimiento"></canvas></div>';
+  var ct = tipo==='torta'?'pie':'doughnut';
+  stCrearChart('canvas-seguimiento', ct,
+    labels.map(function(k){return etiquetas[k];}),
+    [{data:vals,backgroundColor:labels.map(function(k){return coloresSeg[k];}),borderWidth:2,borderColor:'#0d1e22'}]
+  );
+}
+
+function stRenderEvolucion(datos, tipo) {
+  if(stCharts['canvas-evolucion']) { try{stCharts['canvas-evolucion'].destroy();}catch(e){} }
+  // Evolución por año: apilado por tipo de documento
+  var anios = [...new Set(TODOS.map(function(d){return String(d.anio||'');}).filter(Boolean))].sort();
+  var tipos = ['Dictamen','Despacho','Dictamen Información Pública','Providencia'];
+  var colorTipos = {'Dictamen':'rgba(26,138,155,.8)','Despacho':'rgba(200,168,75,.8)','Dictamen Información Pública':'rgba(39,174,96,.8)','Providencia':'rgba(142,68,173,.8)'};
+  var body = document.getElementById('mod-body-evolucion');
+  if (!anios.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+  if (tipo === 'tabla') {
+    body.innerHTML = '<div style="overflow-x:auto"><table class="st-tabla"><thead><tr><th>Año</th>'
+      +tipos.map(function(t){return '<th>'+t.replace('Dictamen Información Pública','Inf.Pública')+'</th>';}).join('')
+      +'<th>Total</th></tr></thead><tbody>'
+      +anios.map(function(a){
+        var fila = datos.filter(function(d){return String(d.anio||'')===a;});
+        if(!fila.length) return '';
+        var celdas = tipos.map(function(t){return '<td>'+fila.filter(function(d){return (d.tipo_documento||''===t);}).length+'</td>';}).join('');
+        return '<tr><td><b>'+a+'</b></td>'+celdas+'<td><b>'+fila.length+'</b></td></tr>';
+      }).join('')+'</tbody></table></div>';
+    return;
+  }
+  body.innerHTML = '<div class="st-canvas-wrap" style="height:300px"><canvas id="canvas-evolucion"></canvas></div>';
+  var datasets = tipos.map(function(t,i){
+    var dvals = anios.map(function(a){
+      return datos.filter(function(d){return String(d.anio||'')===a && (d.tipo_documento||'')=== t;}).length;
+    });
+    return { label: t.replace('Dictamen Información Pública','Inf.Pública'), data: dvals,
+      backgroundColor: colorTipos[t]||ST_COLORES[i],
+      borderColor: (colorTipos[t]||ST_COLORES[i]).replace('.8','.95'),
+      borderWidth: tipo==='linea'?2:1, fill: tipo==='linea'?false:true,
+      tension: 0.3, stack: tipo==='barras'?'stack':undefined
+    };
+  }).filter(function(ds){return ds.data.some(function(v){return v>0;});});
+  stCrearChart('canvas-evolucion', tipo==='linea'?'line':'bar', anios, datasets, { scales:{x:{stacked:tipo==='barras',ticks:{color:'#8fadb5'}},y:{stacked:tipo==='barras',ticks:{color:'#8fadb5'},beginAtZero:true}} });
+}
+
+// Registrar los renderizadores
+stModRenderers['anio']        = stRenderAnio;
+stModRenderers['tipo']        = stRenderTipo;
+stModRenderers['despacho']    = stRenderDespacho;
+stModRenderers['organismo']   = stRenderOrganismo;
+stModRenderers['normativa']   = stRenderNormativa;
+stModRenderers['seguimiento'] = stRenderSeguimiento;
+stModRenderers['evolucion']   = stRenderEvolucion;
+
+// ── Render principal ──────────────────────────────────
+function renderStats() {
+  stDestruirCharts();
+  var datos = stGetDatos();
+  var total      = datos.length;
+  var dictamenes = datos.filter(function(d){return (d.tipo_documento||'')==='Dictamen';}).length;
+  var despachos  = datos.filter(function(d){return (d.tipo_documento||'')==='Despacho';}).length;
+  var infopub    = datos.filter(function(d){return (d.tipo_documento||'')==='Dictamen Información Pública';}).length;
+  var provid     = datos.filter(function(d){return (d.tipo_documento||'')==='Providencia';}).length;
+  var conLink    = datos.filter(function(d){return d.link_drive;}).length;
+
+  // Badge de contexto
+  var partes = [];
+  var vAnio = document.getElementById('st-f-anio').value;
+  var vTipo = document.getElementById('st-f-tipo').value;
+  var vOrg  = document.getElementById('st-f-org').value;
+  var vTxt  = document.getElementById('st-f-texto').value.trim();
+  if (vAnio) partes.push('Año ' + vAnio);
+  if (vTipo) partes.push(vTipo);
+  if (vOrg)  partes.push(vOrg.length>40?vOrg.substring(0,38)+'…':vOrg);
+  if (vTxt)  partes.push('"'+vTxt+'"');
+  var badge = document.getElementById('st-badge');
+  badge.textContent = total + ' doc.' + (partes.length ? ' · ' + partes.join(' · ') : ' · Todos los años');
+
+  // KPIs
+  var kpis = '<div class="st-kpis">'
+    +'<div class="st-kpi"><div class="st-kpi-num">'+total+'</div><div class="st-kpi-label">Total documentos</div></div>'
+    +'<div class="st-kpi"><div class="st-kpi-num">'+dictamenes+'</div><div class="st-kpi-label">Dictámenes</div></div>'
+    +'<div class="st-kpi ac"><div class="st-kpi-num">'+despachos+'</div><div class="st-kpi-label">Despachos</div></div>'
+    +(infopub?'<div class="st-kpi ve"><div class="st-kpi-num">'+infopub+'</div><div class="st-kpi-label">Inf. Pública</div></div>':'')
+    +(provid?'<div class="st-kpi"><div class="st-kpi-num">'+provid+'</div><div class="st-kpi-label">Providencias</div></div>':'')
+    +'<div class="st-kpi ro"><div class="st-kpi-num">'+(total-conLink)+'</div><div class="st-kpi-label">Sin PDF vinculado</div></div>'
+    +'</div>';
+
+  // Grilla de módulos
+  var mods = '<div class="st-modulos">'
+    +stModulo('anio',       'Documentos por año',         '📅', ['barras','linea','tabla'],          stTiposActivos.anio)
+    +stModulo('tipo',       'Tipo de documento',           '📁', ['torta','donut','tabla'],           stTiposActivos.tipo)
+    +stModulo('despacho',   'Despacho del Auditor',        '⚖️', ['barras','torta','donut','tabla'],  stTiposActivos.despacho)
+    +stModulo('organismo',  'Reparticiones con más casos', '🏛', ['barras','tabla'],                  stTiposActivos.organismo, true)
+    +stModulo('normativa',  'Normativa más citada',        '📜', ['barras','tabla'],                  stTiposActivos.normativa, true)
+    +stModulo('seguimiento','Estado de seguimiento',       '🔔', ['donut','torta','indicadores','tabla'], stTiposActivos.seguimiento)
+    +stModulo('evolucion',  'Evolución anual por tipo',    '📈', ['linea','barras','tabla'],          stTiposActivos.evolucion, true)
+    +'</div>';
+
+  document.getElementById('st-body').innerHTML = kpis + mods;
+
+  // Renderizar todos los módulos
+  setTimeout(function() {
+    stRenderAnio(datos,        stTiposActivos.anio);
+    stRenderTipo(datos,        stTiposActivos.tipo);
+    stRenderDespacho(datos,    stTiposActivos.despacho);
+    stRenderOrganismo(datos,   stTiposActivos.organismo);
+    stRenderNormativa(datos,   stTiposActivos.normativa);
+    stRenderSeguimiento(datos, stTiposActivos.seguimiento);
+    stRenderEvolucion(datos,   stTiposActivos.evolucion);
+  }, 50);
+}
+
+function stCambiarTipo(modId, tipo) {
+  stTiposActivos[modId] = tipo;
+  var btns = document.querySelectorAll('[data-mod="'+modId+'"]');
+  btns.forEach(function(b){ b.classList.remove('on'); });
+  event.target.classList.add('on');
+  var datos = stGetDatos();
+  stModRenderers[modId](datos, tipo);
+}
+
+function limpiarFiltrosStats() {
+  document.getElementById('st-f-anio').value  = '';
+  document.getElementById('st-f-tipo').value  = '';
+  document.getElementById('st-f-org').value   = '';
+  document.getElementById('st-f-texto').value = '';
+  renderStats();
+}
+
+// ── Poblar select de organismos ──────────────────────
+function stPoblarOrganismos() {
+  var sel = document.getElementById('st-f-org');
+  if (!sel) return;
+  var orgs = {};
+  TODOS.forEach(function(d){ var o=normalizarOrganismo(d.organismo||''); if(o!=='Sin datos') orgs[o]=true; });
+  var lista = Object.keys(orgs).sort();
+  lista.forEach(function(o){
+    var opt = document.createElement('option');
+    opt.value = o; opt.textContent = o.length>60?o.substring(0,58)+'…':o; opt.title = o;
+    sel.appendChild(opt);
+  });
+  // Años
+  var selAnio = document.getElementById('st-f-anio');
+  var anios = [...new Set(TODOS.map(function(d){return String(d.anio||'');}).filter(Boolean))].sort();
+  anios.forEach(function(a){ var opt=document.createElement('option'); opt.value=a; opt.textContent=a; selAnio.appendChild(opt); });
+}
+
+// ── Toggle panel ──────────────────────────────────────
 function toggleStats() {
   var sv = document.getElementById('stats-view');
   var lw = document.getElementById('lista-wrap');
   var vi = document.getElementById('vista');
   var bs = document.getElementById('btn-stats');
   var ab = document.getElementById('app-buscar');
-  if(sv.style.display === 'block') {
+  if (sv.style.display === 'block') {
+    stDestruirCharts();
     sv.style.display = 'none';
     lw.style.display = 'block';
     ab.style.display = '';
     bs.classList.remove('active');
   } else {
-    vi.style.display = 'none';
-    lw.style.display = 'none';
-    ab.style.display = 'none';
-    sv.style.display = 'block';
+    vi.style.display  = 'none';
+    lw.style.display  = 'none';
+    ab.style.display  = 'none';
+    sv.style.display  = 'block';
     bs.classList.add('active');
-    construirStats('');
+    stPoblarOrganismos();
+    renderStats();
   }
+}
+
+// ══════════════════════════════════════════════════
+// EXPORTAR PDF — MODAL CONFIGURABLE
+// ══════════════════════════════════════════════════
+function abrirModalExportPDF() {
+  var existente = document.getElementById('modal-export-check');
+  if (existente) existente.remove();
+
+  var secciones = [
+    { id:'kpis-export',    titulo:'Resumen general (indicadores)',    key:'kpis'  },
+    { id:'mod-anio',       titulo:'Documentos por año',               key:'anio'  },
+    { id:'mod-tipo',       titulo:'Tipo de documento',                key:'tipo'  },
+    { id:'mod-despacho',   titulo:'Despacho del Auditor',             key:'desp'  },
+    { id:'mod-organismo',  titulo:'Reparticiones con más casos',      key:'org'   },
+    { id:'mod-normativa',  titulo:'Normativa más citada',             key:'norm'  },
+    { id:'mod-seguimiento','titulo':'Estado de seguimiento',          key:'seg'   },
+    { id:'mod-evolucion',  titulo:'Evolución anual por tipo',         key:'evol'  },
+  ];
+
+  var contexto = document.getElementById('st-badge').textContent;
+
+  var overlay = document.createElement('div');
+  overlay.className = 'st-modal-overlay';
+  overlay.id = 'modal-export-check';
+  overlay.innerHTML = '<div class="st-modal">'
+    +'<h3>📄 Exportar estadísticas a PDF</h3>'
+    +'<p class="sub">Contexto actual: <b>'+esc(contexto)+'</b></p>'
+
+    +'<div class="st-modal-section">'
+    +'<label class="group-label">Título del reporte</label>'
+    +'<input type="text" id="exp-titulo" value="Estadísticas institucionales — Ética Pública Mendoza" '
+    +'style="width:100%;background:var(--g2);border:1.5px solid var(--g3);border-radius:7px;padding:9px 12px;font-size:.87rem;color:var(--tx);font-family:inherit;outline:none;margin-bottom:8px">'
+    +'<label class="group-label" style="margin-top:6px">Subtítulo / período</label>'
+    +'<input type="text" id="exp-subtitulo" value="'+esc(contexto)+'" '
+    +'style="width:100%;background:var(--g2);border:1.5px solid var(--g3);border-radius:7px;padding:9px 12px;font-size:.87rem;color:var(--tx);font-family:inherit;outline:none">'
+    +'</div>'
+
+    +'<div class="st-modal-section" style="margin-top:14px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+    +'<label class="group-label" style="margin-bottom:0">Secciones a incluir</label>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="stCheckAll(true)"  style="font-size:.72rem;color:var(--tl);background:transparent;border:none;cursor:pointer;font-family:inherit">Marcar todas</button>'
+    +'<button onclick="stCheckAll(false)" style="font-size:.72rem;color:var(--t2);background:transparent;border:none;cursor:pointer;font-family:inherit">Desmarcar todas</button>'
+    +'</div></div>'
+    +secciones.map(function(s){
+      return '<div class="st-check-item">'
+        +'<input type="checkbox" checked id="chk-'+s.key+'" value="'+s.id+'">'
+        +'<span>'+s.titulo+'</span>'
+        +'</div>';
+    }).join('')
+    +'</div>'
+
+    +'<div class="st-modal-actions">'
+    +'<button class="btn btn-gh" onclick="document.getElementById(\'modal-export-check\').remove()">Cancelar</button>'
+    +'<button class="btn btn-tl" onclick="ejecutarExportPDF()">&#128438; Generar PDF</button>'
+    +'</div>'
+    +'</div>';
+
+  document.body.appendChild(overlay);
+}
+
+function stCheckAll(val) {
+  document.querySelectorAll('#modal-export-check input[type=checkbox]').forEach(function(cb){ cb.checked = val; });
+}
+
+function ejecutarExportPDF() {
+  var titulo    = document.getElementById('exp-titulo').value.trim()    || 'Estadísticas institucionales';
+  var subtitulo = document.getElementById('exp-subtitulo').value.trim() || '';
+  var items = [];
+  document.querySelectorAll('#modal-export-check input[type=checkbox]:checked').forEach(function(cb){
+    var elId = cb.value;
+    var label = cb.parentElement.querySelector('span').textContent.trim();
+    if (elId === 'kpis-export') {
+      // KPIs: capturamos el div de KPIs
+      var kpiDiv = document.querySelector('.st-kpis');
+      if (kpiDiv) items.push({ titulo: label, html: kpiDiv.outerHTML, tipo: 'kpi' });
+    } else {
+      var mod = document.getElementById(elId);
+      if (mod) items.push({ titulo: label, html: mod.outerHTML, tipo: 'modulo' });
+    }
+  });
+  document.getElementById('modal-export-check').remove();
+  if (!items.length) { alert('Seleccioná al menos una sección.'); return; }
+  generarPDFEstadisticas(items, titulo, subtitulo);
+}
+
+function generarPDFEstadisticas(items, titulo, subtitulo) {
+  var logoSrc = document.querySelector('header img') ? document.querySelector('header img').src : '';
+  var fecha   = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var COLORES = { teal:'#1a8a9b', ac:'#c8a84b', ro:'#c0392b', ve:'#27ae60', g4:'#7a9ea6' };
+
+  function procesarModulo(html, tipo) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    tmp.querySelectorAll('button,.st-mod-tipo,.st-topbar-actions').forEach(function(el){el.remove();});
+
+    // KPI cards
+    tmp.querySelectorAll('.st-kpi,.st-kpis').forEach(function(el){
+      if(el.classList.contains('st-kpis')){
+        el.removeAttribute('class'); el.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px';
+      } else {
+        var color = el.classList.contains('ac')?COLORES.ac:el.classList.contains('ro')?COLORES.ro:el.classList.contains('ve')?COLORES.ve:COLORES.teal;
+        el.removeAttribute('class');
+        el.style.cssText='display:inline-block;background:#f0f7f9;border-radius:6px;padding:10px 16px;text-align:center;border-bottom:3px solid '+color+';margin:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact';
+      }
+    });
+    tmp.querySelectorAll('.st-kpi-num').forEach(function(el){el.removeAttribute('class');el.style.cssText='font-size:16pt;font-weight:bold;color:'+COLORES.teal+';line-height:1';});
+    tmp.querySelectorAll('.st-kpi-label').forEach(function(el){el.removeAttribute('class');el.style.cssText='font-size:7pt;color:#666;margin-top:3px;text-transform:uppercase';});
+
+    // Módulo header/body
+    tmp.querySelectorAll('.st-mod-header').forEach(function(el){el.removeAttribute('class');el.style.cssText='padding:6px 0;border-bottom:1px solid #dde;margin-bottom:8px';});
+    tmp.querySelectorAll('.st-mod-header h3').forEach(function(el){el.style.cssText='font-size:9pt;color:'+COLORES.teal+';margin:0';});
+    tmp.querySelectorAll('.st-mod-body').forEach(function(el){el.removeAttribute('class');el.style.cssText='padding:6px 0';});
+    tmp.querySelectorAll('.st-modulo,.st-modulo.ancho').forEach(function(el){el.removeAttribute('class');el.style.cssText='margin-bottom:8px';});
+
+    // Tablas
+    tmp.querySelectorAll('.st-tabla').forEach(function(el){el.removeAttribute('class');el.style.cssText='width:100%;border-collapse:collapse;font-size:8pt';});
+    tmp.querySelectorAll('.st-tabla th').forEach(function(el){el.style.cssText='text-align:left;font-size:7pt;text-transform:uppercase;color:'+COLORES.teal+';padding:4px 8px;border-bottom:1px solid #cde';});
+    tmp.querySelectorAll('.st-tabla td').forEach(function(el){el.style.cssText='padding:5px 8px;border-bottom:1px solid #eee;font-size:8pt;color:#333';});
+    tmp.querySelectorAll('.st-rank').forEach(function(el){el.style.cssText='color:#aaa;font-size:7pt;width:22px';});
+    tmp.querySelectorAll('.st-bar-inline').forEach(function(el){el.style.cssText='height:5px;background:'+COLORES.teal+';border-radius:2px;display:inline-block;-webkit-print-color-adjust:exact;print-color-adjust:exact;min-width:4px;width:'+el.style.width;});
+
+    // Canvas → imagen
+    tmp.querySelectorAll('canvas').forEach(function(canvas){
+      var canvasId = canvas.id;
+      var chartInst = stCharts[canvasId];
+      if (chartInst) {
+        var img = document.createElement('img');
+        img.src = chartInst.toBase64Image();
+        img.style.cssText = 'max-width:100%;height:auto;display:block';
+        canvas.parentNode.replaceChild(img, canvas);
+      } else {
+        canvas.remove();
+      }
+    });
+
+    return tmp.innerHTML;
+  }
+
+  var estilos = '<style>'
+    +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
+    +'html,body{margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;color:#222;font-size:8.5pt;padding:16px 20px}'
+    +'.encabezado{display:flex;align-items:center;gap:14px;border-bottom:3px solid '+COLORES.teal+';padding-bottom:10px;margin-bottom:10px}'
+    +'.encabezado img{height:40px;width:auto}'
+    +'.enc-texto h1{font-size:10.5pt;color:'+COLORES.teal+';margin:0;font-weight:bold;line-height:1.2}'
+    +'.enc-texto p{font-size:7.5pt;color:#666;margin:2px 0 0 0}'
+    +'.subtitulo{font-size:8pt;color:#555;margin-bottom:12px;padding:5px 10px;background:#f0f7f9;border-radius:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.sec{margin-bottom:14px;padding:10px 14px;border:1px solid #cde;border-radius:5px;break-inside:avoid;page-break-inside:avoid}'
+    +'.sec-titulo{font-size:9pt;font-weight:bold;color:'+COLORES.teal+';border-bottom:1px solid #dde;padding-bottom:4px;margin-bottom:8px}'
+    +'.footer{margin-top:12px;font-size:7pt;color:#aaa;border-top:1px solid #ddd;padding-top:6px;text-align:right}'
+    +'@media print{html{zoom:0.82}body{padding:8px 12px}.sec{break-inside:avoid;page-break-inside:avoid}}'
+    +'</style>';
+
+  var cuerpo = '<div class="encabezado">'
+    +(logoSrc?'<img src="'+logoSrc+'" alt="">':'')
+    +'<div class="enc-texto">'
+    +'<h1>'+esc(titulo)+'</h1>'
+    +'<p>Oficina de Investigaciones Administrativas y Ética Pública · Provincia de Mendoza</p>'
+    +'</div></div>'
+    +'<div class="subtitulo"><b>'+esc(subtitulo)+'</b> &nbsp;·&nbsp; Generado el '+fecha+'</div>';
+
+  items.forEach(function(item){
+    cuerpo += '<div class="sec"><div class="sec-titulo">'+esc(item.titulo)+'</div>'+procesarModulo(item.html, item.tipo)+'</div>';
+  });
+  cuerpo += '<div class="footer">Sistema de Dictámenes — Ética Pública Mendoza</div>';
+
+  var win = window.open('','_blank');
+  win.document.write('<html><head><meta charset="UTF-8"><title>'+esc(titulo)+'</title>'+estilos+'</head><body>'+cuerpo+'</body></html>');
+  win.document.close();
+  setTimeout(function(){ win.print(); }, 800);
 }
 
 // ── Normalización de organismos ──
@@ -1784,354 +2448,7 @@ function normalizarNorma(n) {
   return n;
 }
 
-function top10(arr, campo) {
-  var cnt = {};
-  arr.forEach(function(d){ var v=normalizarOrganismo(d[campo]||'Sin datos'); cnt[v]=(cnt[v]||0)+1; });
-  return Object.entries(cnt).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
-}
 
-function construirStats(anioFiltro) {
-  var sv = document.getElementById('stats-view');
-  var D = anioFiltro ? TODOS.filter(function(d){ return String(d.anio||'') === anioFiltro; }) : TODOS;
-  if(!D.length){ sv.innerHTML='<div class="stats-header"><button class="btn btn-gh" onclick="toggleStats()">← Volver</button><h2>📊 Estadísticas</h2></div><p style="color:var(--t2);padding:20px">Sin datos para el año seleccionado.</p>'; return; }
-
-  var anios = [...new Set(TODOS.map(function(d){return String(d.anio||'?');}).filter(Boolean))].sort();
-
-  // Totales
-  var total      = D.length;
-  var dictamenes = D.filter(function(d){ return (d.tipo_documento||'')==='Dictamen'; }).length;
-  var despachos  = D.filter(function(d){ return (d.tipo_documento||'')==='Despacho'; }).length;
-  var infopub    = D.filter(function(d){ return (d.tipo_documento||'')==='Dictamen Información Pública'; }).length;
-  var conLink    = D.filter(function(d){ return d.link_drive; }).length;
-
-  // Por año (solo si no hay filtro)
-  var porAnio = {};
-  TODOS.forEach(function(d){ var a=String(d.anio||'?'); porAnio[a]=(porAnio[a]||0)+1; });
-  var maxAnio = Math.max.apply(null, Object.values(porAnio));
-
-  // Organismos normalizados top10
-  var topOrg = top10(D,'organismo');
-  var maxOrg = topOrg[0]?topOrg[0][1]:1;
-
-  // Resoluciones agrupadas
-  var res = {'Apertura de sumario / Investigación':0,'Archivo / Guarda temporal':0,'Corrección administrativa':0,'No avocamiento / Sin irregularidad':0,'Recomendación':0,'Rechazo':0,'Recurso por incumplimiento':0,'Remisión / Elevación':0,'Requerimiento de informe':0,'Seguimiento de control':0,'Sin despacho registrado':0};
-  D.forEach(function(d){
-    var r=(d.resolucion||'').toLowerCase().trim();
-    if(!r) res['Sin despacho registrado']++;
-    else if(/archiv|guarda temporal|reserva/.test(r)) res['Archivo / Guarda temporal']++;
-    else if(/sumario|investigaci|apertura|instrucci/.test(r)) res['Apertura de sumario / Investigación']++;
-    else if(/seguimiento|control|habilitad/.test(r)) res['Seguimiento de control']++;
-    else if(/requiere|requier|informe circunstanciado|solicita|corre vista/.test(r)) res['Requerimiento de informe']++;
-    else if(/remit|vuelvan|eleva|notif|pase en|devolver|ofici|compulsa/.test(r)) res['Remisión / Elevación']++;
-    else if(/recurso|incumplimiento|ley 9070|acceso.*informaci/.test(r)) res['Recurso por incumplimiento']++;
-    else if(/rechaz|in limine/.test(r)) res['Rechazo']++;
-    else if(/no avoc|clausur|sin irregularidad|sin asidero|irreprochable|no existe incompatib|agota|concluye/.test(r)) res['No avocamiento / Sin irregularidad']++;
-    else if(/recomend|sugiere|aconsej/.test(r)) res['Recomendación']++;
-    else if(/cambia|numeraci|corrij|errata/.test(r)) res['Corrección administrativa']++;
-    else res['Sin despacho registrado']++;
-  });
-
-  // Seguimiento
-  var seg = {'sin_asignar':0,'pendiente':0,'cumplido':0,'sin_respuesta':0};
-  D.forEach(function(d){ var s=d.seguimiento||'sin_asignar'; if(seg[s]!==undefined) seg[s]++; });
-
-  // Normativa normalizada
-  var normCnt = {};
-  D.forEach(function(d){
-    (d.normativa||'').split(',').forEach(function(n){
-      var nn = normalizarNorma(n.trim());
-      if(nn){ normCnt[nn]=(normCnt[nn]||0)+1; }
-    });
-  });
-  var topNorm = Object.entries(normCnt).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
-  var maxNorm = topNorm[0]?topNorm[0][1]:1;
-
-  // ── Función para generar barras (nombres completos con tooltip) ──
-  function bars(items, max, cls, idPrefix) {
-    return items.map(function(it, i){
-      var pct = Math.max(4, Math.round(it[1]/max*100));
-      var label = it[0].length > 35 ? it[0].substring(0,33)+'...' : it[0];
-      return '<div class="bar-row" id="'+(idPrefix||'bar')+i+'">'
-        +'<div class="bar-label" title="'+esc(it[0])+'" style="min-width:200px;max-width:200px">'+esc(label)+'</div>'
-        +'<div class="bar-wrap"><div class="bar-fill'+(cls?' '+cls:'')+'" style="width:'+pct+'%"><span>'+it[1]+'</span></div></div>'
-        +'</div>';
-    }).join('');
-  }
-
-  // ── Selector de año ──
-  var selectorAnio = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">'
-    +'<label style="font-size:.8rem;color:var(--t2)">Filtrar por año:</label>'
-    +'<select onchange="construirStats(this.value)" style="background:var(--g2);border:1.5px solid var(--g3);border-radius:7px;padding:7px 12px;font-size:.84rem;color:var(--tx);font-family:inherit;outline:none">'
-    +'<option value=""'+(anioFiltro?'':' selected')+'>Todos los años</option>'
-    +anios.map(function(a){ return '<option value="'+a+'"'+(a===anioFiltro?' selected':'')+'>'+a+'</option>'; }).join('')
-    +'</select>'
-    +(anioFiltro?'<span style="font-size:.78rem;color:var(--tl)">Mostrando '+total+' dictámenes de '+anioFiltro+'</span>':'')
-    +'</div>';
-
-  // ── Función exportar sección a PDF ──
-  function btnExport(id, titulo) {
-    return '<button onclick="exportarSeccionPDF(\''+id+'\',\''+titulo+'\')" style="float:right;background:transparent;border:1px solid var(--g3);border-radius:5px;padding:3px 10px;font-size:.72rem;color:var(--t2);cursor:pointer;font-family:inherit">&#128438; PDF</button>';
-  }
-
-  var html = '<div class="stats-header">'
-    +'<button class="btn btn-gh" onclick="toggleStats()">← Volver al buscador</button>'
-    +'<h2>📊 Estadísticas institucionales</h2>'
-    +'<button class="btn btn-gh" onclick="exportarTodosPDF()">&#128438; Exportar todo</button>'
-    +'</div>'
-    +selectorAnio
-    // Tarjetas resumen
-    +'<div class="stats-grid" id="sec-resumen">'
-    +'<div class="stat-card"><div class="stat-num">'+total+'</div><div class="stat-label">Total</div></div>'
-    +'<div class="stat-card"><div class="stat-num">'+dictamenes+'</div><div class="stat-label">Dictámenes</div></div>'
-    +'<div class="stat-card"><div class="stat-num">'+despachos+'</div><div class="stat-label">Despachos</div></div>'
-    +'<div class="stat-card"><div class="stat-num">'+infopub+'</div><div class="stat-label">Inf. Pública</div></div>'
-    +'<div class="stat-card"><div class="stat-num">'+conLink+'</div><div class="stat-label">Con PDF en Drive</div></div>'
-    +'</div>';
-
-  // Por año (solo si no hay filtro)
-  if(!anioFiltro) {
-    html += '<div class="stats-section" id="sec-anio">'+btnExport('sec-anio','Dictámenes por año')+'<h3>📅 Dictámenes por año</h3>'
-      +Object.keys(porAnio).sort().map(function(a){
-        var pct=Math.max(4,Math.round(porAnio[a]/maxAnio*100));
-        return '<div class="bar-row"><div class="bar-label" style="min-width:60px;max-width:60px">'+a+'</div>'
-          +'<div class="bar-wrap"><div class="bar-fill" style="width:'+pct+'%"><span>'+porAnio[a]+'</span></div></div></div>';
-      }).join('')+'</div>';
-  }
-
-  html += '<div class="stats-section" id="sec-org">'+btnExport('sec-org','Top organismos')+'<h3>🏛 Top organismos con más dictámenes</h3>'+bars(topOrg,maxOrg,'','org')+'</div>'
-    +'<div class="stats-section" id="sec-res">'+btnExport('sec-res','Despacho del Auditor')+'<h3>⚖️ Despacho del Auditor</h3>'
-    +function(){
-      var maxRes = Math.max.apply(null, Object.values(res).concat([1]));
-      return Object.entries(res).map(function(r){
-        if(r[1] === 0) return '';
-        var pct = Math.max(4, Math.round(r[1]/maxRes*100));
-        return '<div class="bar-row"><div class="bar-label" style="min-width:200px;max-width:200px">'+r[0]+'</div>'
-          +'<div class="bar-wrap"><div class="bar-fill" style="width:'+pct+'%"><span>'+r[1]+'</span></div></div></div>';
-      }).join('');
-    }()+'</div>'
-    +(topNorm.length?'<div class="stats-section" id="sec-norm">'+btnExport('sec-norm','Normativa más citada')+'<h3>📜 Normativa más citada</h3>'+bars(topNorm,maxNorm,'ac','norm')+'</div>':'')
-    +'<div class="stats-section" id="sec-seg">'+btnExport('sec-seg','Estado de seguimiento')+'<h3>🔔 Estado de seguimiento</h3><div class="seg-summary">'
-    +[['pendiente','#e67e22','⏳'],['cumplido','#27ae60','✅'],['sin_respuesta','#c0392b','❌'],['sin_asignar','var(--g4)','—']].map(function(s){
-      return '<div class="seg-sum-item"><div class="seg-sum-num" style="color:'+s[1]+'">'+s[2]+' '+seg[s[0]]+'</div>'
-        +'<div class="seg-sum-label">'+segLabel(s[0])+'</div></div>';
-    }).join('')+'</div></div>';
-
-  sv.innerHTML = html;
-}
-
-function exportarSeccionPDF(secId, titulo) {
-  var el = document.getElementById(secId);
-  if(!el) return;
-  var anioActual = document.querySelector('#stats-view select') ? document.querySelector('#stats-view select').value : '';
-  var subtitulo = anioActual ? 'Año ' + anioActual : 'Todos los años';
-  var win = window.open('','_blank');
-  win.document.write(generarHTMLPDF([{titulo:titulo, html:el.innerHTML}], titulo, subtitulo));
-  win.document.close();
-  setTimeout(function(){ win.print(); }, 700);
-}
-
-function exportarTodosPDF() {
-  // Mostrar modal con checkboxes
-  var anioActual = document.querySelector('#stats-view select') ? document.querySelector('#stats-view select').value : '';
-  var subtitulo = anioActual ? 'Año ' + anioActual : 'Todos los años';
-  var secs = [
-    {id:'sec-resumen', titulo:'Resumen general'},
-    {id:'sec-anio',    titulo:'Dictámenes por año'},
-    {id:'sec-org',     titulo:'Top organismos'},
-    {id:'sec-res',     titulo:'Tipo de resoluciones'},
-    {id:'sec-norm',    titulo:'Normativa más citada'},
-    {id:'sec-seg',     titulo:'Estado de seguimiento'},
-  ].filter(function(s){ return document.getElementById(s.id); });
-
-  // Crear modal de selección
-  var existente = document.getElementById('modal-export-check');
-  if(existente) existente.remove();
-
-  var modal = document.createElement('div');
-  modal.id = 'modal-export-check';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
-  modal.innerHTML = '<div style="background:var(--g1);border:1.5px solid var(--to);border-radius:14px;padding:26px;max-width:440px;width:100%">'
-    +'<h3 style="font-family:Georgia,serif;font-size:1.05rem;color:var(--bl);margin-bottom:6px">📄 Exportar a PDF</h3>'
-    +'<p style="font-size:.78rem;color:var(--t2);margin-bottom:16px">Seleccioná las secciones a incluir — '+subtitulo+'</p>'
-    +'<div id="export-checks" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">'
-    +secs.map(function(s){
-      return '<label style="display:flex;align-items:center;gap:10px;font-size:.86rem;color:var(--tx);cursor:pointer">'
-        +'<input type="checkbox" checked value="'+s.id+'" style="width:16px;height:16px;accent-color:var(--teal)"> '+s.titulo
-        +'</label>';
-    }).join('')
-    +'</div>'
-    +'<div style="display:flex;gap:10px;justify-content:flex-end">'
-    +'<button onclick="document.getElementById(\'modal-export-check\').remove()" style="background:transparent;border:1px solid var(--g3);border-radius:7px;padding:8px 16px;font-size:.84rem;color:var(--t2);cursor:pointer;font-family:inherit">Cancelar</button>'
-    +'<button onclick="ejecutarExportSeleccion(\''+subtitulo+'\')" style="background:var(--teal);border:none;border-radius:7px;padding:8px 18px;font-size:.84rem;font-weight:600;color:#fff;cursor:pointer;font-family:inherit">&#128438; Generar PDF</button>'
-    +'</div></div>';
-  document.body.appendChild(modal);
-}
-
-function ejecutarExportSeleccion(subtitulo) {
-  var checks = document.querySelectorAll('#export-checks input[type=checkbox]:checked');
-  var items = [];
-  checks.forEach(function(cb){
-    var el = document.getElementById(cb.value);
-    var label = cb.parentElement.textContent.trim();
-    if(el) items.push({titulo: label, html: el.innerHTML});
-  });
-  document.getElementById('modal-export-check').remove();
-  if(!items.length){ alert('Seleccioná al menos una sección.'); return; }
-  var win = window.open('','_blank');
-  win.document.write(generarHTMLPDF(items, 'Estadísticas institucionales', subtitulo));
-  win.document.close();
-  setTimeout(function(){ win.print(); }, 700);
-}
-
-function generarHTMLPDF(items, tituloPrincipal, subtitulo) {
-  var COLORES = {
-    teal: '#1a8a9b', ac: '#b8940a', ro: '#c0392b',
-    tl: '#0d7a8a',  ve: '#1e8449', gris: '#7a9ea6',
-  };
-
-  function colorPorClase(cls) {
-    if(!cls) return COLORES.teal;
-    if(cls.includes('ac')) return COLORES.ac;
-    if(cls.includes('ro')) return COLORES.ro;
-    if(cls.includes('tl')) return COLORES.tl;
-    if(cls.includes('ve')) return COLORES.ve;
-    return COLORES.teal;
-  }
-
-  function procesarHTML(html) {
-    // Crear un DOM temporal para manipular correctamente
-    var tmp = document.createElement('div');
-    tmp.innerHTML = html;
-
-    // Quitar botones de exportar
-    tmp.querySelectorAll('button').forEach(function(b){ b.remove(); });
-
-    // Procesar bar-fill: combinar class y style correctamente
-    tmp.querySelectorAll('[class*="bar-fill"]').forEach(function(el){
-      var cls = el.className || '';
-      var color = colorPorClase(cls);
-      var width = el.style.width || '100%';
-      el.removeAttribute('class');
-      el.style.cssText = 'height:100%;background-color:'+color
-        +';border-radius:3px;display:flex;align-items:center'
-        +';justify-content:flex-end;padding-right:6px'
-        +';-webkit-print-color-adjust:exact;print-color-adjust:exact'
-        +';width:'+width;
-    });
-
-    // Procesar bar-wrap
-    tmp.querySelectorAll('[class*="bar-wrap"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'flex:1;background-color:#dce8ea;border-radius:3px;height:22px;overflow:hidden';
-    });
-
-    // Procesar bar-label
-    tmp.querySelectorAll('[class*="bar-label"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'min-width:200px;max-width:200px;font-size:9.5pt;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-    });
-
-    // Procesar bar-row
-    tmp.querySelectorAll('[class*="bar-row"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:7px';
-    });
-
-    // stat-card
-    tmp.querySelectorAll('[class*="stat-card"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'display:inline-block;background-color:#e8f4f6;border-radius:6px;padding:12px 20px;margin:6px;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact';
-    });
-    tmp.querySelectorAll('[class*="stat-num"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'font-size:16pt;font-weight:bold;color:'+COLORES.teal+';line-height:1';
-    });
-    tmp.querySelectorAll('[class*="stat-label"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'font-size:7pt;color:#666;margin-top:3px;text-transform:uppercase;letter-spacing:.05em';
-    });
-
-    // stats-grid
-    tmp.querySelectorAll('[class*="stats-grid"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px';
-    });
-
-    // seg-summary
-    tmp.querySelectorAll('[class*="seg-summary"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap';
-    });
-    tmp.querySelectorAll('[class*="seg-sum-item"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'background-color:#f0f4f5;border-radius:5px;padding:8px 10px;text-align:center;min-width:90px;-webkit-print-color-adjust:exact;print-color-adjust:exact';
-    });
-    tmp.querySelectorAll('[class*="seg-sum-num"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'font-size:15pt;font-weight:bold;line-height:1';
-    });
-    tmp.querySelectorAll('[class*="seg-sum-label"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'font-size:7pt;color:#666;margin-top:3px;text-transform:uppercase';
-    });
-
-    // h3 dentro de la sección
-    tmp.querySelectorAll('h3').forEach(function(el){
-      el.style.color = COLORES.tl;
-      el.style.fontSize = '9pt';
-      el.style.borderBottom = '1px solid #cde';
-      el.style.paddingBottom = '3px';
-      el.style.marginBottom = '8px';
-      el.style.marginTop = '0';
-    });
-
-    // bar-row más compacto
-    tmp.querySelectorAll('[class*="bar-row"]').forEach(function(el){
-      el.removeAttribute('class');
-      el.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px';
-    });
-
-    return tmp.innerHTML;
-  }
-
-  var logoB64 = document.querySelector('header img') ? document.querySelector('header img').src : '';
-
-  var estilos = '<style>'
-    +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
-    +'html,body{margin:0;padding:0}'
-    +'body{font-family:Arial,sans-serif;color:#222;font-size:8.5pt;padding:18px 22px}'
-    +'.encabezado{display:flex;align-items:center;gap:14px;border-bottom:3px solid '+COLORES.teal+';padding-bottom:10px;margin-bottom:10px}'
-    +'.encabezado img{height:44px;width:auto}'
-    +'.encabezado-texto h1{font-size:11pt;color:'+COLORES.teal+';margin:0;font-weight:bold;line-height:1.2}'
-    +'.encabezado-texto p{font-size:7.5pt;color:#666;margin:2px 0 0 0}'
-    +'.subtitulo{font-size:8pt;color:#555;margin-bottom:12px;padding:5px 10px;background:#f0f7f9;border-radius:4px}'
-    +'.sec{margin-bottom:12px;padding:10px 14px;border:1px solid #cde;border-radius:5px;break-inside:avoid;page-break-inside:avoid}'
-    +'.sec-titulo{font-size:9pt;font-weight:bold;color:'+COLORES.tl+';border-bottom:1px solid #dde;padding-bottom:4px;margin-bottom:8px}'
-    +'.footer{margin-top:12px;font-size:7pt;color:#aaa;border-top:1px solid #ddd;padding-top:6px;text-align:right}'
-    +'@media print{'
-    +'  html{zoom:0.78}'  // escala automática para entrar en una página
-    +'  body{padding:10px 14px}'
-    +'  .sec{break-inside:avoid;page-break-inside:avoid}'
-    +'}'
-    +'</style>';
-
-  var fechaHoy = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
-
-  var cuerpo = '<div class="encabezado">'
-    +(logoB64 ? '<img src="'+logoB64+'" alt="Ética Pública">' : '')
-    +'<div class="encabezado-texto">'
-    +'<h1>Oficina de Investigaciones Administrativas y Ética Pública</h1>'
-    +'<p>Provincia de Mendoza &nbsp;·&nbsp; Sistema de Gestión de Dictámenes</p>'
-    +'</div></div>'
-    +'<div class="subtitulo"><b>'+tituloPrincipal+'</b> &nbsp;·&nbsp; '+subtitulo+' &nbsp;·&nbsp; Generado el '+fechaHoy+'</div>';
-
-  items.forEach(function(item){
-    cuerpo += '<div class="sec"><div class="sec-titulo">'+item.titulo+'</div>'+procesarHTML(item.html)+'</div>';
-  });
-
-  cuerpo += '<div class="footer">Sistema de Dictámenes — Oficina de Ética Pública Mendoza</div>';
-  return '<html><head><meta charset="UTF-8"><title>'+tituloPrincipal+'</title>'+estilos+'</head><body>'+cuerpo+'</body></html>';
-}
 // ══════════════════════════════════════════════════
 // MODO CLARO / OSCURO
 // ══════════════════════════════════════════════════
