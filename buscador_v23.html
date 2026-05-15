@@ -365,6 +365,7 @@ mark{background:rgba(200,168,75,.25);color:var(--ac);border-radius:2px;padding:0
         <option value="Dictamen">Solo Dictámenes</option>
         <option value="Despacho">Solo Despachos</option>
         <option value="Dictamen Información Pública">Información Pública</option>
+        <option value="Providencia">Solo Providencias</option>
       </select>
       <select id="fr3">
         <option value="">Despacho del Auditor (todos)</option>
@@ -559,6 +560,20 @@ async function cargarDictamenes() {
 }
 
 // ══════════════════════════════════════════════════
+// NORMALIZACIÓN DE TILDES
+// ══════════════════════════════════════════════════
+function norm(s) {
+  if (!s) return '';
+  return String(s).toLowerCase()
+    .replace(/[áàäâã]/g, 'a')
+    .replace(/[éèëê]/g, 'e')
+    .replace(/[íìïî]/g, 'i')
+    .replace(/[óòöôõ]/g, 'o')
+    .replace(/[úùüû]/g, 'u')
+    .replace(/ñ/g, 'n');
+}
+
+// ══════════════════════════════════════════════════
 // BÚSQUEDA Y FILTROS
 // ══════════════════════════════════════════════════
 function actualizarPlaceholder() {
@@ -571,7 +586,7 @@ function actualizarPlaceholder() {
 }
 
 function buscar() {
-  var q    = document.getElementById('q').value.toLowerCase().trim();
+  var q    = norm(document.getElementById('q').value.trim());
   var modo = document.getElementById('modo-busqueda').value;
   var an   = document.getElementById('fa').value;
   var ti   = document.getElementById('ft').value;
@@ -580,11 +595,11 @@ function buscar() {
     if (an && String(d.anio||'') !== an) return false;
     if (ti && (d.tipo_documento||'') !== ti) return false;
     if (re) {
-      var rv = (d.resolucion||'').toLowerCase().trim();
+      var rv = norm(d.resolucion||'');
       if (re === '__vacio__') {
         if (rv) return false;
       } else {
-        var pats = re.split('|');
+        var pats = re.split('|').map(norm);
         var match = pats.some(function(p){ return rv.includes(p); });
         if (!match) return false;
       }
@@ -594,7 +609,7 @@ function buscar() {
              d.organismo, d.normativa, d.resolucion, d.observaciones,
              d.firmantes, d.expediente_interno, d.expediente_electronico,
              d.caratula, d.tags, d.seguimiento_nota,
-             String(d.numero_dictamen||''), String(d.anio||'')].join(' ').toLowerCase();
+             String(d.numero_dictamen||''), String(d.anio||'')].map(norm).join(' ');
     if (modo === 'frase') {
       return h.includes(q);
     } else if (modo === 'todas') {
@@ -648,11 +663,27 @@ function render() {
 
 function esc(s){ if(!s&&s!==0)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function hl(t,q){
-  if(!t)return''; var r=esc(t); if(!q)return r;
-  q.split(' ').filter(function(p){return p.length>1;}).forEach(function(p){
-    try{ r=r.replace(new RegExp('('+p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>'); }catch(e){}
-  }); return r;
+function hl(t, q) {
+  if (!t) return '';
+  var escaped = esc(t);
+  if (!q) return escaped;
+  // Trabajamos sobre el texto escapado pero buscamos con versión normalizada
+  var palabras = norm(q).split(/\s+/).filter(function(p){ return p.length > 1; });
+  palabras.forEach(function(p) {
+    try {
+      // Construimos un patrón que matchea cada carácter normalizado
+      // con su versión acentuada original
+      var patron = p.split('').map(function(c) {
+        var map = {
+          'a': '[aáàäâã]', 'e': '[eéèëê]', 'i': '[iíìïî]',
+          'o': '[oóòöôõ]', 'u': '[uúùüû]', 'n': '[nñ]'
+        };
+        return map[c] ? map[c] : c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }).join('');
+      escaped = escaped.replace(new RegExp('(' + patron + ')', 'gi'), '<mark>$1</mark>');
+    } catch(e) {}
+  });
+  return escaped;
 }
 
 function segLabel(s){
@@ -834,7 +865,7 @@ function mkFormEdicion(d, idx) {
     +'<h3>&#9998; Editar dictamen</h3>'
     +'<div class="edit-grid">'
     +'<div class="edit-group"><label>Tema principal</label><textarea id="e-tema_principal">'+esc(d.tema_principal||'')+'</textarea></div>'
-    +'<div class="edit-group"><label>Tipo de documento</label><select id="e-tipo_documento"><option value="Dictamen"'+(d.tipo_documento==='Dictamen'?' selected':'')+'>Dictamen</option><option value="Despacho"'+(d.tipo_documento==='Despacho'?' selected':'')+'>Despacho</option></select></div>'
+    +'<div class="edit-group"><label>Tipo de documento</label><select id="e-tipo_documento"><option value="Dictamen"'+(d.tipo_documento==='Dictamen'?' selected':'')+'>Dictamen</option><option value="Despacho"'+(d.tipo_documento==='Despacho'?' selected':'')+'>Despacho</option><option value="Dictamen Información Pública"'+(d.tipo_documento==='Dictamen Información Pública'?' selected':'')+'>Dictamen Información Pública</option><option value="Providencia"'+(d.tipo_documento==='Providencia'?' selected':'')+'>Providencia</option></select></div>'
     +'<div class="edit-group"><label>Fecha</label><input type="text" id="e-fecha" value="'+esc(d.fecha||'')+'"></div>'
     +'<div class="edit-group"><label>Organismo</label><input type="text" id="e-organismo" value="'+esc(d.organismo||'')+'"></div>'
     +'<div class="edit-group"><label>Denunciante</label><input type="text" id="e-denunciante" value="'+esc(d.denunciante||'')+'"></div>'
