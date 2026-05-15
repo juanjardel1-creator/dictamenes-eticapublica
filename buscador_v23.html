@@ -352,9 +352,10 @@ mark{background:rgba(200,168,75,.25);color:var(--ac);border-radius:2px;padding:0
     <div class="fr">
       <select id="fa"><option value="">Todos los años</option></select>
       <select id="ft">
-        <option value="">Dictámenes y Despachos</option>
+        <option value="">Todos los tipos</option>
         <option value="Dictamen">Solo Dictámenes</option>
         <option value="Despacho">Solo Despachos</option>
+        <option value="Resolución Ticket">Solo Resoluciones Ticket</option>
       </select>
       <select id="fr3">
         <option value="">Despacho del Auditor (todos)</option>
@@ -368,13 +369,6 @@ mark{background:rgba(200,168,75,.25);color:var(--ac);border-radius:2px;padding:0
         <option value="recomend|sugiere|aconsej">Recomendación</option>
         <option value="cambia|numeraci|corrij|errata">Corrección administrativa</option>
         <option value="__vacio__">Sin despacho registrado</option>
-      </select>
-      <select id="fseg">
-        <option value="">Todos los estados</option>
-        <option value="pendiente">⏳ Pendiente</option>
-        <option value="cumplido">✅ Cumplido</option>
-        <option value="sin_respuesta">❌ Sin respuesta</option>
-        <option value="sin_asignar">— Sin asignar</option>
       </select>
       <button class="btn btn-ac" id="btn-conclusion" onclick="abrirModalConclusion()" disabled style="opacity:.4;cursor:not-allowed">&#9878; Análisis temático</button>
     </div>
@@ -480,7 +474,7 @@ const sb = createClient(SB_URL, SB_KEY);
 var TODOS = [], fil = [], pag = 1, PP = 20;
 var estadoGuardado = null;
 var usuarioActual = null;
-var esEditor = false;   // true = editor, false = lector (sin edición ni IA)
+var esEditor = false;   // true = editor, false = lector
 var dictamenActualIdx = null;
 
 // ══════════════════════════════════════════════════
@@ -512,11 +506,8 @@ async function cerrarSesion() {
 
 function mostrarApp(user) {
   usuarioActual = user;
-
-  // Leer rol del usuario (por defecto: lector)
   var rol = (user.user_metadata && user.user_metadata.rol) ? user.user_metadata.rol : 'lector';
   esEditor = (rol === 'editor');
-
   var inicial = (user.email || 'U').charAt(0).toUpperCase();
   document.getElementById('user-avatar').textContent = inicial;
   document.getElementById('login-screen').style.display = 'none';
@@ -524,18 +515,12 @@ function mostrarApp(user) {
   document.getElementById('app-buscar').style.display = '';
   document.getElementById('app-main').style.display = '';
   document.getElementById('app-footer').style.display = '';
-
-  // Aplicar restricciones para lectores
   if (!esEditor) {
-    // Ocultar botón Asistente IA
     var btnAsistente = document.querySelector('button[onclick="abrirAsistente()"]');
     if (btnAsistente) btnAsistente.style.display = 'none';
-    // Ocultar botón Análisis temático
     var btnAnalisis = document.getElementById('btn-conclusion');
     if (btnAnalisis) btnAnalisis.style.display = 'none';
   }
-
-  // Actualizar ícono según modo actual
   var claro = document.body.classList.contains('modo-claro');
   document.getElementById('btn-modo').textContent = claro ? '☀️' : '🌙';
   cargarDictamenes();
@@ -558,7 +543,7 @@ async function cargarDictamenes() {
   anios.forEach(function(a){ var o = document.createElement('option'); o.value = a; o.textContent = a; sel.appendChild(o); });
   // Listeners
   document.getElementById('q').addEventListener('input', function(){ pag=1; buscar(); });
-  ['fa','ft','fr3','fseg'].forEach(function(id){ document.getElementById(id).addEventListener('change', function(){ pag=1; buscar(); }); });
+  ['fa','ft','fr3'].forEach(function(id){ document.getElementById(id).addEventListener('change', function(){ pag=1; buscar(); }); });
   buscar();
 }
 
@@ -570,7 +555,6 @@ function buscar() {
   var an = document.getElementById('fa').value;
   var ti = document.getElementById('ft').value;
   var re = document.getElementById('fr3').value;
-  var seg = document.getElementById('fseg').value;
   fil = TODOS.filter(function(d) {
     if (an && String(d.anio||'') !== an) return false;
     if (ti && (d.tipo_documento||'') !== ti) return false;
@@ -584,7 +568,6 @@ function buscar() {
         if(!match) return false;
       }
     }
-    if (seg && (d.seguimiento||'sin_asignar') !== seg) return false;
     if (!q) return true;
     var h = [d.tema_principal, d.tema_secundario, d.denunciante, d.denunciado,
              d.organismo, d.normativa, d.resolucion, d.observaciones,
@@ -604,8 +587,7 @@ function actualizarBotonAnalisis() {
   var hayFiltro = document.getElementById('q').value.trim()
     || document.getElementById('fa').value
     || document.getElementById('ft').value
-    || document.getElementById('fr3').value
-    || document.getElementById('fseg').value;
+    || document.getElementById('fr3').value;
   var habilitado = (seleccionados.size >= 2) || (fil.length >= 2);
   if(habilitado) {
     btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
@@ -712,7 +694,7 @@ function gp(n){ pag=n; seleccionados.clear(); render(); window.scrollTo({top:0,b
 
 function limpiar(){
   document.getElementById('q').value='';
-  ['fa','ft','fr3','fseg'].forEach(function(id){document.getElementById(id).value='';});
+  ['fa','ft','fr3'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('pan').classList.remove('show');
   pag=1; buscar();
 }
@@ -882,8 +864,9 @@ async function guardarEdicion(dictamenId, idx) {
 
   // Actualizar local
   historial.forEach(function(h){ TODOS[idx][h.campo] = h.nuevo; });
-  document.getElementById('edit-save-msg').classList.add('show');
-  setTimeout(function(){ document.getElementById('edit-save-msg').classList.remove('show'); },3000);
+  // Cerrar formulario y refrescar ficha
+  toggleEdicion();
+  abrirFicha(idx);
 }
 
 // ══════════════════════════════════════════════════
