@@ -2025,17 +2025,6 @@ function stRenderTipo(datos, tipo) {
   stCrearChart('cv-tipo-s',(tipo==='torta')?'pie':'doughnut',Object.keys(cntS),[{data:Object.values(cntS),backgroundColor:ST_COLORES,borderWidth:2,borderColor:'#0d1e22'}]);
   stCrearChart('cv-tipo-c','bar',r.labels,r.datasets,{});
 }
-  if (tipo === 'tabla') {
-    body.innerHTML = '<table class="st-tabla"><thead><tr><th>Tipo</th><th>Cantidad</th><th>%</th></tr></thead><tbody>'
-      +labels.sort(function(a,b){return cnt[b]-cnt[a];}).map(function(l){
-        return '<tr><td>'+l+'</td><td><b>'+cnt[l]+'</b></td><td>'+Math.round(cnt[l]/datos.length*100)+'%</td></tr>';
-      }).join('')+'</tbody></table>';
-    return;
-  }
-  body.innerHTML = '<div class="st-canvas-wrap"><canvas id="canvas-tipo"></canvas></div>';
-  var ct = (tipo==='torta')?'pie':'doughnut';
-  stCrearChart('canvas-tipo', ct, labels, [{data:vals,backgroundColor:ST_COLORES,borderWidth:2,borderColor:'#0d1e22'}]);
-}
 
 function stRenderDespacho(datos, tipo) {
   if(stCharts['canvas-despacho']) { try{stCharts['canvas-despacho'].destroy();}catch(e){} }
