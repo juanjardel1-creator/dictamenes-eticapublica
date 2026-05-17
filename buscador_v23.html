@@ -319,6 +319,23 @@ mark{background:rgba(200,168,75,.25);color:var(--ac);border-radius:2px;padding:0
 .stat-num{font-family:Georgia,serif;font-size:2rem;color:var(--tl);font-weight:700;line-height:1}
 .stat-label{font-size:.72rem;color:var(--t2);margin-top:6px;text-transform:uppercase;letter-spacing:.08em}
 
+/* ── MULTISELECT DROPDOWN ── */
+.ms-wrap{position:relative;display:inline-block;min-width:160px}
+.ms-btn{background:var(--g2);border:1.5px solid var(--g3);border-radius:7px;padding:8px 12px;font-size:.84rem;color:var(--tx);font-family:inherit;cursor:pointer;outline:none;width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-btn:focus,.ms-btn.open{border-color:var(--teal)}
+.ms-btn .ms-arrow{font-size:.6rem;opacity:.6;flex-shrink:0;transition:transform .2s}
+.ms-btn.open .ms-arrow{transform:rotate(180deg)}
+.ms-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:100%;background:var(--g1);border:1.5px solid var(--teal);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:300;padding:6px 0;max-height:280px;overflow-y:auto;display:none}
+.ms-dropdown.open{display:block}
+.ms-item{display:flex;align-items:center;gap:9px;padding:7px 13px;cursor:pointer;font-size:.83rem;color:var(--tx);transition:background .12s;white-space:nowrap}
+.ms-item:hover{background:var(--g2)}
+.ms-item input[type=checkbox]{width:15px;height:15px;accent-color:var(--teal);cursor:pointer;flex-shrink:0}
+.ms-item.all-opt{border-bottom:1px solid var(--g3);margin-bottom:4px;color:var(--tl);font-weight:600}
+/* ── MODO COMPARACIÓN EN MÓDULOS ── */
+.st-modo-datos{display:flex;gap:3px;margin-left:auto}
+.st-modo-btn{background:var(--g2);border:1px solid var(--g3);border-radius:5px;padding:4px 8px;font-size:.68rem;color:var(--t2);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.st-modo-btn.on{background:rgba(200,168,75,.18);border-color:var(--ac);color:var(--ac)}
+.st-modo-btn:hover:not(.on){border-color:var(--teal);color:var(--tl)}
 /* ── SELECCIÓN PARA COMPARAR ── */
 .card-check{position:absolute;top:12px;right:12px;width:20px;height:20px;accent-color:var(--teal);cursor:pointer;z-index:2}
 .card.seleccionada{border-color:var(--teal);box-shadow:0 0 0 2px rgba(26,138,155,.3)}
@@ -460,28 +477,51 @@ mark{background:rgba(200,168,75,.25);color:var(--ac);border-radius:2px;padding:0
   <!-- Filtros de contexto -->
   <div class="st-filtros">
     <div class="st-filtros-inner">
+      <!-- Período: multiselect -->
       <div class="st-filtro-grupo">
         <label>Período</label>
-        <select id="st-f-anio" onchange="renderStats()">
-          <option value="">Todos los años</option>
-        </select>
+        <div class="ms-wrap" id="ms-anio-wrap">
+          <button class="ms-btn" id="ms-anio-btn" onclick="msToggle('anio')" type="button">
+            <span id="ms-anio-label">Todos los años</span>
+            <span class="ms-arrow">▼</span>
+          </button>
+          <div class="ms-dropdown" id="ms-anio-drop">
+            <label class="ms-item all-opt">
+              <input type="checkbox" id="ms-anio-all" onchange="msToggleAll('anio')" checked>
+              <span>Todos los años</span>
+            </label>
+            <!-- opciones se pueblan con JS -->
+          </div>
+        </div>
       </div>
+      <!-- Tipo: multiselect -->
       <div class="st-filtro-grupo">
         <label>Tipo de documento</label>
-        <select id="st-f-tipo" onchange="renderStats()">
-          <option value="">Todos los tipos</option>
-          <option value="Dictamen">Dictámenes</option>
-          <option value="Despacho">Despachos</option>
-          <option value="Dictamen Información Pública">Información Pública</option>
-          <option value="Providencia">Providencias</option>
-        </select>
+        <div class="ms-wrap" id="ms-tipo-wrap">
+          <button class="ms-btn" id="ms-tipo-btn" onclick="msToggle('tipo')" type="button">
+            <span id="ms-tipo-label">Todos los tipos</span>
+            <span class="ms-arrow">▼</span>
+          </button>
+          <div class="ms-dropdown" id="ms-tipo-drop">
+            <label class="ms-item all-opt">
+              <input type="checkbox" id="ms-tipo-all" onchange="msToggleAll('tipo')" checked>
+              <span>Todos los tipos</span>
+            </label>
+            <label class="ms-item"><input type="checkbox" class="ms-tipo-cb" value="Dictamen" onchange="msCambio('tipo')"><span>Dictámenes</span></label>
+            <label class="ms-item"><input type="checkbox" class="ms-tipo-cb" value="Despacho" onchange="msCambio('tipo')"><span>Despachos</span></label>
+            <label class="ms-item"><input type="checkbox" class="ms-tipo-cb" value="Dictamen Información Pública" onchange="msCambio('tipo')"><span>Información Pública</span></label>
+            <label class="ms-item"><input type="checkbox" class="ms-tipo-cb" value="Providencia" onchange="msCambio('tipo')"><span>Providencias</span></label>
+          </div>
+        </div>
       </div>
+      <!-- Repartición: select simple (se puebla con JS) -->
       <div class="st-filtro-grupo">
         <label>Repartición</label>
         <select id="st-f-org" onchange="renderStats()" style="min-width:220px">
           <option value="">Todas las reparticiones</option>
         </select>
       </div>
+      <!-- Texto libre -->
       <div class="st-filtro-grupo">
         <label>Texto en tema / resolución</label>
         <input type="text" id="st-f-texto" placeholder="Ej: incompatibilidad..." oninput="renderStats()" style="min-width:200px">
@@ -1740,13 +1780,15 @@ var ST_COLORES = [
 ];
 
 function stGetDatos() {
-  var anio  = document.getElementById('st-f-anio')  ? document.getElementById('st-f-anio').value  : '';
-  var tipo  = document.getElementById('st-f-tipo')  ? document.getElementById('st-f-tipo').value  : '';
+  // Períodos seleccionados
+  var anios = msGetSeleccionados('anio');
+  // Tipos seleccionados
+  var tipos = msGetSeleccionados('tipo');
   var org   = document.getElementById('st-f-org')   ? document.getElementById('st-f-org').value   : '';
   var texto = document.getElementById('st-f-texto') ? norm(document.getElementById('st-f-texto').value.trim()) : '';
   return TODOS.filter(function(d) {
-    if (anio  && String(d.anio||'') !== anio) return false;
-    if (tipo  && (d.tipo_documento||'') !== tipo) return false;
+    if (anios.length && anios.indexOf(String(d.anio||'')) === -1) return false;
+    if (tipos.length && tipos.indexOf(d.tipo_documento||'') === -1) return false;
     if (org   && normalizarOrganismo(d.organismo||'') !== org) return false;
     if (texto) {
       var haystack = norm([d.tema_principal,d.tema_secundario,d.resolucion,d.observaciones].join(' '));
@@ -1795,6 +1837,7 @@ function stModulo(id, titulo, emoji, tiposDisponibles, tipoActivo, fnRender, anc
     +'<div class="st-mod-header">'
     +'<h3>'+emoji+' '+titulo+'</h3>'
     +'<div class="st-mod-tipo">'+btnsTipo+'</div>'
+    +stBotonesModo(id)
     +'</div>'
     +'<div class="st-mod-body" id="mod-body-'+id+'"><div class="st-canvas-wrap"><canvas id="canvas-'+id+'"></canvas></div></div>'
     +'</div>';
@@ -1822,35 +1865,166 @@ var stModRenderers = {};
 
 function stRenderAnio(datos, tipo) {
   if(stCharts['canvas-anio']) { try{stCharts['canvas-anio'].destroy();}catch(e){} }
-  var cnt = {}; datos.forEach(function(d){ var a=String(d.anio||'?'); cnt[a]=(cnt[a]||0)+1; });
-  var anios = Object.keys(cnt).sort();
-  var vals  = anios.map(function(a){return cnt[a];});
   var body  = document.getElementById('mod-body-anio');
-  if (!anios.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
-  if (tipo === 'tabla') {
-    body.innerHTML = '<table class="st-tabla"><thead><tr><th>#</th><th>Año</th><th>Cantidad</th><th>Distribución</th></tr></thead><tbody>'
-      +anios.map(function(a,i){
-        var pct = Math.round(cnt[a]/datos.length*100);
-        return '<tr><td class="st-rank">'+(i+1)+'</td><td>'+a+'</td><td><b>'+cnt[a]+'</b></td>'
-          +'<td><div class="st-bar-inline" style="width:'+Math.max(4,pct)+'px;background:var(--teal)"></div> '+pct+'%</td></tr>';
-      }).join('')+'</tbody></table>';
+  var grupos = stGetGrupos(datos);
+  var modo   = stGetModo('anio');
+  var hayMultiple = grupos.length > 1;
+
+  // ── Suma (o un solo grupo) ──
+  function renderSuma(datosSuma) {
+    var cnt = {}; datosSuma.forEach(function(d){ var a=String(d.anio||'?'); cnt[a]=(cnt[a]||0)+1; });
+    var anios = Object.keys(cnt).sort(); var vals = anios.map(function(a){return cnt[a];});
+    if (!anios.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+    if (tipo === 'tabla') {
+      body.innerHTML = '<table class="st-tabla"><thead><tr><th>#</th><th>Año</th><th>Cantidad</th><th>Distribución</th></tr></thead><tbody>'
+        +anios.map(function(a,i){
+          var pct = Math.round(cnt[a]/datosSuma.length*100);
+          return '<tr><td class="st-rank">'+(i+1)+'</td><td>'+a+'</td><td><b>'+cnt[a]+'</b></td>'
+            +'<td><div class="st-bar-inline" style="width:'+Math.max(4,pct)+'px;background:var(--teal)"></div> '+pct+'%</td></tr>';
+        }).join('')+'</tbody></table>';
+      return;
+    }
+    body.innerHTML = '<div class="st-canvas-wrap"><canvas id="canvas-anio"></canvas></div>';
+    stCrearChart('canvas-anio', tipo==='linea'?'line':'bar', anios, [{
+      label: 'Documentos', data: vals,
+      backgroundColor: tipo==='linea' ? 'rgba(26,138,155,.2)' : ST_COLORES,
+      borderColor: tipo==='linea' ? '#1a8a9b' : ST_COLORES,
+      borderWidth: 2, fill: tipo==='linea', tension: 0.4, pointBackgroundColor: '#1a8a9b'
+    }], { plugins: { legend: { display: false } } });
+  }
+
+  // ── Comparación (un dataset por grupo) ──
+  function renderComparacion(wrapId, canvasId) {
+    // Unión de años de todos los grupos
+    var todosAnios = [];
+    grupos.forEach(function(g){ Object.keys(g.datos.reduce(function(acc,d){acc[String(d.anio||'?')]=1;return acc;},{})).forEach(function(a){ if(todosAnios.indexOf(a)===-1) todosAnios.push(a); }); });
+    todosAnios.sort();
+    if (!todosAnios.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+    if (tipo === 'tabla') {
+      var thead = '<tr><th>Año</th>'+grupos.map(function(g){return '<th>'+g.label+'</th>';}).join('')+'</tr>';
+      var rows = todosAnios.map(function(a){
+        var cells = grupos.map(function(g){
+          var c = g.datos.filter(function(d){return String(d.anio||'?')===a;}).length;
+          return '<td>'+c+'</td>';
+        }).join('');
+        return '<tr><td>'+a+'</td>'+cells+'</tr>';
+      }).join('');
+      return '<table class="st-tabla"><thead>'+thead+'</thead><tbody>'+rows+'</tbody></table>';
+    }
+    var datasets = grupos.map(function(g,i){
+      var cnt={}; g.datos.forEach(function(d){var a=String(d.anio||'?');cnt[a]=(cnt[a]||0)+1;});
+      return {
+        label: g.label, data: todosAnios.map(function(a){return cnt[a]||0;}),
+        backgroundColor: COLORES_SERIES[i%COLORES_SERIES.length],
+        borderColor: COLORES_BORDE[i%COLORES_BORDE.length], borderWidth:2,
+        fill: false, tension:0.4, pointBackgroundColor: COLORES_BORDE[i%COLORES_BORDE.length]
+      };
+    });
+    var html = '<div class="st-canvas-wrap" id="'+wrapId+'"><canvas id="'+canvasId+'"></canvas></div>';
+    return { labels: todosAnios, datasets: datasets, html: html };
+  }
+
+  if (!hayMultiple || modo === 'suma') { renderSuma(datos); return; }
+  if (modo === 'comparacion') {
+    var r = renderComparacion('cw-anio','canvas-anio');
+    if (tipo === 'tabla') { body.innerHTML = r; return; }
+    body.innerHTML = r.html;
+    stCrearChart('canvas-anio', tipo==='linea'?'line':'bar', r.labels, r.datasets, {});
     return;
   }
-  body.innerHTML = '<div class="st-canvas-wrap"><canvas id="canvas-anio"></canvas></div>';
-  stCrearChart('canvas-anio', tipo==='linea'?'line':'bar', anios, [{
-    label: 'Documentos', data: vals,
-    backgroundColor: tipo==='linea' ? 'rgba(26,138,155,.2)' : ST_COLORES,
-    borderColor: tipo==='linea' ? '#1a8a9b' : ST_COLORES,
-    borderWidth: 2, fill: tipo==='linea', tension: 0.4, pointBackgroundColor: '#1a8a9b'
-  }], { plugins: { legend: { display: false } } });
+  // Ambos
+  var sumHtml = '<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin-bottom:6px">Suma total</p>';
+  var cmpResult = renderComparacion('cw-anio-cmp','cv-anio-cmp');
+  if (tipo === 'tabla') {
+    var cntS={}; datos.forEach(function(d){var a=String(d.anio||'?');cntS[a]=(cntS[a]||0)+1;});
+    var aniosS=Object.keys(cntS).sort();
+    var tblSum = '<table class="st-tabla"><thead><tr><th>Año</th><th>Total</th></tr></thead><tbody>'
+      +aniosS.map(function(a){return '<tr><td>'+a+'</td><td><b>'+cntS[a]+'</b></td></tr>';}).join('')
+      +'</tbody></table>';
+    body.innerHTML = sumHtml+tblSum+'<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin:10px 0 6px">Comparación</p>'+cmpResult;
+    return;
+  }
+  body.innerHTML = sumHtml+'<div class="st-canvas-wrap" id="cw-anio-suma"><canvas id="cv-anio-suma"></canvas></div>'
+    +'<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin:14px 0 6px">Comparación</p>'
+    +cmpResult.html;
+  var cntS={}; datos.forEach(function(d){var a=String(d.anio||'?');cntS[a]=(cntS[a]||0)+1;});
+  var aniosS=Object.keys(cntS).sort();
+  stCrearChart('cv-anio-suma', tipo==='linea'?'line':'bar', aniosS, [{
+    label:'Total', data:aniosS.map(function(a){return cntS[a]||0;}),
+    backgroundColor:'rgba(26,138,155,.5)', borderColor:'#1a8a9b', borderWidth:2, fill:tipo==='linea', tension:0.4
+  }], {plugins:{legend:{display:false}}});
+  stCrearChart('cv-anio-cmp', tipo==='linea'?'line':'bar', cmpResult.labels, cmpResult.datasets, {});
 }
 
 function stRenderTipo(datos, tipo) {
   if(stCharts['canvas-tipo']) { try{stCharts['canvas-tipo'].destroy();}catch(e){} }
-  var cnt = {}; datos.forEach(function(d){ var t=d.tipo_documento||'Sin tipo'; cnt[t]=(cnt[t]||0)+1; });
-  var labels = Object.keys(cnt); var vals = labels.map(function(k){return cnt[k];});
   var body = document.getElementById('mod-body-tipo');
-  if (!labels.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+  var grupos = stGetGrupos(datos);
+  var modo   = stGetModo('tipo');
+  var hayMultiple = grupos.length > 1;
+
+  function renderSumaTipo(datosSuma) {
+    var cnt = {}; datosSuma.forEach(function(d){ var t=d.tipo_documento||'Sin tipo'; cnt[t]=(cnt[t]||0)+1; });
+    var labels = Object.keys(cnt); var vals = labels.map(function(k){return cnt[k];});
+    if (!labels.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+    if (tipo === 'tabla') {
+      body.innerHTML = '<table class="st-tabla"><thead><tr><th>Tipo</th><th>Cantidad</th><th>%</th></tr></thead><tbody>'
+        +labels.sort(function(a,b){return cnt[b]-cnt[a];}).map(function(l){
+          return '<tr><td>'+l+'</td><td><b>'+cnt[l]+'</b></td><td>'+Math.round(cnt[l]/datosSuma.length*100)+'%</td></tr>';
+        }).join('')+'</tbody></table>';
+      return;
+    }
+    body.innerHTML = '<div class="st-canvas-wrap"><canvas id="canvas-tipo"></canvas></div>';
+    var ct = (tipo==='torta')?'pie':'doughnut';
+    stCrearChart('canvas-tipo', ct, labels, [{data:vals,backgroundColor:ST_COLORES,borderWidth:2,borderColor:'#0d1e22'}]);
+  }
+
+  function renderCmpTipo() {
+    var allTipos = ['Dictamen','Despacho','Dictamen Información Pública','Providencia'];
+    if (tipo === 'tabla') {
+      var thead = '<tr><th>Tipo</th>'+grupos.map(function(g){return '<th>'+g.label+'</th>';}).join('')+'</tr>';
+      var rows = allTipos.map(function(t){
+        var cells = grupos.map(function(g){
+          return '<td>'+g.datos.filter(function(d){return (d.tipo_documento||'')===t;}).length+'</td>';
+        }).join('');
+        return '<tr><td>'+t+'</td>'+cells+'</tr>';
+      }).join('');
+      return '<table class="st-tabla"><thead>'+thead+'</thead><tbody>'+rows+'</tbody></table>';
+    }
+    var datasets = grupos.map(function(g,i){
+      var cnt={}; g.datos.forEach(function(d){var t=d.tipo_documento||'Sin tipo';cnt[t]=(cnt[t]||0)+1;});
+      return { label:g.label, data:allTipos.map(function(t){return cnt[t]||0;}),
+        backgroundColor:COLORES_SERIES[i%COLORES_SERIES.length], borderColor:COLORES_BORDE[i%COLORES_BORDE.length], borderWidth:2 };
+    });
+    return { labels: allTipos, datasets: datasets };
+  }
+
+  if (!hayMultiple || modo === 'suma') { renderSumaTipo(datos); return; }
+  if (modo === 'comparacion') {
+    var r = renderCmpTipo();
+    if (tipo === 'tabla') { body.innerHTML = r; return; }
+    body.innerHTML = '<div class="st-canvas-wrap"><canvas id="canvas-tipo"></canvas></div>';
+    stCrearChart('canvas-tipo','bar',r.labels,r.datasets,{});
+    return;
+  }
+  // Ambos
+  var r = renderCmpTipo();
+  if (tipo === 'tabla') {
+    var cntS={}; datos.forEach(function(d){var t=d.tipo_documento||'Sin tipo';cntS[t]=(cntS[t]||0)+1;});
+    var tblSum='<table class="st-tabla"><thead><tr><th>Tipo</th><th>Total</th></tr></thead><tbody>'
+      +Object.keys(cntS).sort(function(a,b){return cntS[b]-cntS[a];}).map(function(t){return '<tr><td>'+t+'</td><td><b>'+cntS[t]+'</b></td></tr>';}).join('')
+      +'</tbody></table>';
+    body.innerHTML='<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin-bottom:6px">Suma</p>'+tblSum
+      +'<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin:10px 0 6px">Comparación</p>'+r;
+    return;
+  }
+  body.innerHTML='<div class="st-canvas-wrap" id="cw-tipo-s"><canvas id="cv-tipo-s"></canvas></div>'
+    +'<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin:14px 0 6px">Comparación</p>'
+    +'<div class="st-canvas-wrap" id="cw-tipo-c"><canvas id="cv-tipo-c"></canvas></div>';
+  var cntS={}; datos.forEach(function(d){var t=d.tipo_documento||'Sin tipo';cntS[t]=(cntS[t]||0)+1;});
+  stCrearChart('cv-tipo-s',(tipo==='torta')?'pie':'doughnut',Object.keys(cntS),[{data:Object.values(cntS),backgroundColor:ST_COLORES,borderWidth:2,borderColor:'#0d1e22'}]);
+  stCrearChart('cv-tipo-c','bar',r.labels,r.datasets,{});
+}
   if (tipo === 'tabla') {
     body.innerHTML = '<table class="st-tabla"><thead><tr><th>Tipo</th><th>Cantidad</th><th>%</th></tr></thead><tbody>'
       +labels.sort(function(a,b){return cnt[b]-cnt[a];}).map(function(l){
@@ -1865,107 +2039,228 @@ function stRenderTipo(datos, tipo) {
 
 function stRenderDespacho(datos, tipo) {
   if(stCharts['canvas-despacho']) { try{stCharts['canvas-despacho'].destroy();}catch(e){} }
-  var res = {'Apertura de sumario / Investigación':0,'Archivo / Guarda temporal':0,'Corrección administrativa':0,
-    'No avocamiento / Sin irregularidad':0,'Recomendación':0,'Rechazo':0,'Recurso por incumplimiento':0,
-    'Remisión / Elevación':0,'Requerimiento de informe':0,'Seguimiento de control':0,'Sin despacho registrado':0};
-  datos.forEach(function(d){
-    var r=(d.resolucion||'').toLowerCase().trim();
-    if(!r) res['Sin despacho registrado']++;
-    else if(/archiv|guarda temporal|reserva/.test(r)) res['Archivo / Guarda temporal']++;
-    else if(/sumario|investigaci|apertura|instrucci/.test(r)) res['Apertura de sumario / Investigación']++;
-    else if(/seguimiento|control|habilitad/.test(r)) res['Seguimiento de control']++;
-    else if(/requiere|requier|informe circunstanciado|solicita|corre vista/.test(r)) res['Requerimiento de informe']++;
-    else if(/remit|vuelvan|eleva|notif|pase en|devolver|ofici|compulsa/.test(r)) res['Remisión / Elevación']++;
-    else if(/recurso|incumplimiento|ley 9070|acceso.*informaci/.test(r)) res['Recurso por incumplimiento']++;
-    else if(/rechaz|in limine/.test(r)) res['Rechazo']++;
-    else if(/no avoc|clausur|sin irregularidad|sin asidero|irreprochable|no existe incompatib|agota|concluye/.test(r)) res['No avocamiento / Sin irregularidad']++;
-    else if(/recomend|sugiere|aconsej/.test(r)) res['Recomendación']++;
-    else if(/cambia|numeraci|corrij|errata/.test(r)) res['Corrección administrativa']++;
-    else res['Sin despacho registrado']++;
-  });
-  var entries = Object.entries(res).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];});
-  var labels = entries.map(function(e){return e[0];}); var vals = entries.map(function(e){return e[1];});
+  var grupos = stGetGrupos(datos); var modo = stGetModo('despacho'); var hayMultiple = grupos.length > 1;
+  var CATS = ['Apertura de sumario / Investigación','Archivo / Guarda temporal','Corrección administrativa',
+    'No avocamiento / Sin irregularidad','Recomendación','Rechazo','Recurso por incumplimiento',
+    'Remisión / Elevación','Requerimiento de informe','Seguimiento de control','Sin despacho registrado'];
+  var opcHoriz = { indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{color:'#8fadb5',font:{size:9}}},y:{ticks:{color:'#8fadb5',font:{size:9}}}} };
+
+  function clasificar(datosIn) {
+    var res = {}; CATS.forEach(function(c){res[c]=0;});
+    datosIn.forEach(function(d){
+      var r=(d.resolucion||'').toLowerCase().trim();
+      if(!r) res['Sin despacho registrado']++;
+      else if(/archiv|guarda temporal|reserva/.test(r)) res['Archivo / Guarda temporal']++;
+      else if(/sumario|investigaci|apertura|instrucci/.test(r)) res['Apertura de sumario / Investigación']++;
+      else if(/seguimiento|control|habilitad/.test(r)) res['Seguimiento de control']++;
+      else if(/requiere|requier|informe circunstanciado|solicita|corre vista/.test(r)) res['Requerimiento de informe']++;
+      else if(/remit|vuelvan|eleva|notif|pase en|devolver|ofici|compulsa/.test(r)) res['Remisión / Elevación']++;
+      else if(/recurso|incumplimiento|ley 9070|acceso.*informaci/.test(r)) res['Recurso por incumplimiento']++;
+      else if(/rechaz|in limine/.test(r)) res['Rechazo']++;
+      else if(/no avoc|clausur|sin irregularidad|sin asidero|irreprochable|no existe incompatib|agota|concluye/.test(r)) res['No avocamiento / Sin irregularidad']++;
+      else if(/recomend|sugiere|aconsej/.test(r)) res['Recomendación']++;
+      else if(/cambia|numeraci|corrij|errata/.test(r)) res['Corrección administrativa']++;
+      else res['Sin despacho registrado']++;
+    });
+    var entries = Object.entries(res).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];});
+    var labels = entries.map(function(e){return e[0];}); var vals = entries.map(function(e){return e[1];});
+    return { entries:entries, labels:labels, vals:vals,
+      tablaSuma: !entries.length ? '<div class="st-vacio">Sin datos</div>' :
+        '<table class="st-tabla"><thead><tr><th>#</th><th>Categoría</th><th>Cantidad</th></tr></thead><tbody>'
+        +entries.map(function(e,i){return '<tr><td class="st-rank">'+(i+1)+'</td><td>'+e[0]+'</td><td><b>'+e[1]+'</b></td></tr>';}).join('')+'</tbody></table>',
+      canvasHtml:'<div class="st-canvas-wrap" style="height:320px"><canvas id="canvas-despacho"></canvas></div>',
+      chartType:'bar', chartTypeCompare:'bar',
+      datasetsSuma:[{label:'Dictámenes',data:vals,backgroundColor:'rgba(26,138,155,.75)',borderColor:'#1a8a9b',borderWidth:1}] };
+  }
+
   var body = document.getElementById('mod-body-despacho');
-  if (!entries.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
-  if (tipo === 'tabla') {
-    body.innerHTML = '<table class="st-tabla"><thead><tr><th>#</th><th>Categoría</th><th>Cantidad</th></tr></thead><tbody>'
-      +entries.map(function(e,i){return '<tr><td class="st-rank">'+(i+1)+'</td><td>'+e[0]+'</td><td><b>'+e[1]+'</b></td></tr>';}).join('')
-      +'</tbody></table>';
+  var todosLosDatos = grupos.reduce(function(acc,g){return acc.concat(g.datos);},[]);
+
+  if (!hayMultiple || modo === 'suma') {
+    var r = clasificar(todosLosDatos);
+    if (!r.entries.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+    if (tipo === 'tabla') { body.innerHTML = r.tablaSuma; return; }
+    body.innerHTML = r.canvasHtml;
+    if (tipo === 'torta' || tipo === 'donut') {
+      stCrearChart('canvas-despacho', tipo==='torta'?'pie':'doughnut', r.labels, [{data:r.vals,backgroundColor:ST_COLORES,borderWidth:2,borderColor:'#0d1e22'}]);
+    } else {
+      stCrearChart('canvas-despacho','bar',r.labels,r.datasetsSuma,opcHoriz);
+    }
     return;
   }
-  body.innerHTML = '<div class="st-canvas-wrap" style="height:320px"><canvas id="canvas-despacho"></canvas></div>';
-  if (tipo === 'torta' || tipo === 'donut') {
-    stCrearChart('canvas-despacho', tipo==='torta'?'pie':'doughnut', labels, [{data:vals,backgroundColor:ST_COLORES,borderWidth:2,borderColor:'#0d1e22'}]);
+  stRenderComparacionGenerica('despacho','canvas-despacho',grupos,clasificar,tipo,opcHoriz);
+}
+
+// Helper genérico: renderiza un módulo en modo comparación con datasets paralelos
+function stRenderComparacionGenerica(modId, canvasId, grupos, extraerLabelsVals, tipo, opciones) {
+  var body = document.getElementById('mod-body-'+modId);
+  var modo = stGetModo(modId);
+  var hayMultiple = grupos.length > 1;
+
+  // Suma
+  function doSuma(datos) {
+    var r = extraerLabelsVals(datos);
+    if (!r.entries.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+    if (tipo === 'tabla') {
+      body.innerHTML = r.tablaSuma;
+    } else {
+      body.innerHTML = r.canvasHtml;
+      stCrearChart(canvasId, r.chartType, r.labels, r.datasetsSuma, opciones||{});
+    }
+  }
+
+  // Comparación
+  function doComparacion(containerCanvasId) {
+    var allLabels = [];
+    grupos.forEach(function(g){
+      extraerLabelsVals(g.datos).labels.forEach(function(l){ if(allLabels.indexOf(l)===-1) allLabels.push(l); });
+    });
+    var datasets = grupos.map(function(g,i){
+      var r = extraerLabelsVals(g.datos);
+      var valMap = {}; r.labels.forEach(function(l,j){ valMap[l]=r.vals[j]; });
+      return { label:g.label, data:allLabels.map(function(l){return valMap[l]||0;}),
+        backgroundColor:COLORES_SERIES[i%COLORES_SERIES.length], borderColor:COLORES_BORDE[i%COLORES_BORDE.length], borderWidth:2 };
+    });
+    return { labels: allLabels, datasets: datasets, html: '<div class="st-canvas-wrap" style="height:'+Math.max(280,allLabels.length*28)+'px"><canvas id="'+containerCanvasId+'"></canvas></div>' };
+  }
+
+  var datos = grupos.reduce(function(acc,g){return acc.concat(g.datos);},[]); // todos
+  if (!hayMultiple || modo === 'suma') { doSuma(datos); return; }
+  if (modo === 'comparacion') {
+    var r = doComparacion(canvasId);
+    if (tipo === 'tabla') {
+      var thead='<tr><th>Categoría</th>'+grupos.map(function(g){return '<th>'+g.label+'</th>';}).join('')+'</tr>';
+      var rows=r.labels.map(function(l){
+        return '<tr><td>'+esc(l)+'</td>'+grupos.map(function(g){
+          var rv=extraerLabelsVals(g.datos); var idx=rv.labels.indexOf(l);
+          return '<td>'+(idx>=0?rv.vals[idx]:0)+'</td>';
+        }).join('')+'</tr>';
+      }).join('');
+      body.innerHTML='<table class="st-tabla"><thead>'+thead+'</thead><tbody>'+rows+'</tbody></table>';
+    } else {
+      body.innerHTML = r.html;
+      stCrearChart(canvasId, extraerLabelsVals(datos).chartTypeCompare||'bar', r.labels, r.datasets, opciones||{});
+    }
+    return;
+  }
+  // Ambos
+  var rCmp = doComparacion(canvasId+'_c');
+  var rSum = extraerLabelsVals(datos);
+  if (tipo === 'tabla') {
+    var thead='<tr><th>Categoría</th>'+grupos.map(function(g){return '<th>'+g.label+'</th>';}).join('')+'</tr>';
+    var rows=rCmp.labels.map(function(l){
+      return '<tr><td>'+esc(l)+'</td>'+grupos.map(function(g){
+        var rv=extraerLabelsVals(g.datos); var idx=rv.labels.indexOf(l);
+        return '<td>'+(idx>=0?rv.vals[idx]:0)+'</td>';
+      }).join('')+'</tr>';
+    }).join('');
+    body.innerHTML='<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin-bottom:6px">Suma</p>'+rSum.tablaSuma
+      +'<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin:10px 0 6px">Comparación</p>'
+      +'<table class="st-tabla"><thead>'+thead+'</thead><tbody>'+rows+'</tbody></table>';
   } else {
-    // Barras horizontales
-    stCrearChart('canvas-despacho', 'bar', labels, [{
-      label:'Dictámenes', data:vals, backgroundColor:'rgba(26,138,155,.75)', borderColor:'#1a8a9b', borderWidth:1
-    }], { indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{color:'#8fadb5',font:{size:9}}},y:{ticks:{color:'#8fadb5',font:{size:9}}}} });
+    body.innerHTML='<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin-bottom:6px">Suma</p>'
+      +rSum.canvasHtml.replace('id="'+canvasId+'"','id="'+canvasId+'_s"')
+      +'<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin:14px 0 6px">Comparación</p>'
+      +rCmp.html;
+    stCrearChart(canvasId+'_s', rSum.chartType, rSum.labels, rSum.datasetsSuma, opciones||{});
+    stCrearChart(canvasId+'_c', rSum.chartTypeCompare||'bar', rCmp.labels, rCmp.datasets, opciones||{});
   }
 }
 
 function stRenderOrganismo(datos, tipo) {
   if(stCharts['canvas-organismo']) { try{stCharts['canvas-organismo'].destroy();}catch(e){} }
-  var cnt = {};
-  datos.forEach(function(d){ var o=normalizarOrganismo(d.organismo||''); cnt[o]=(cnt[o]||0)+1; });
-  var entries = Object.entries(cnt).sort(function(a,b){return b[1]-a[1];}).slice(0,15);
-  var labels = entries.map(function(e){return e[0];}); var vals = entries.map(function(e){return e[1];});
-  var body = document.getElementById('mod-body-organismo');
-  if (!entries.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
-  if (tipo === 'tabla') {
+  var grupos = stGetGrupos(datos); var modo = stGetModo('organismo'); var hayMultiple = grupos.length>1;
+  var opcHoriz = { indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{color:'#8fadb5',font:{size:9}}},y:{ticks:{color:'#8fadb5',font:{size:9}}}} };
+
+  function buildOrganismo(datosIn) {
+    var cnt = {}; datosIn.forEach(function(d){ var o=normalizarOrganismo(d.organismo||''); cnt[o]=(cnt[o]||0)+1; });
+    var entries = Object.entries(cnt).sort(function(a,b){return b[1]-a[1];}).slice(0,15);
+    var labels = entries.map(function(e){return e[0];}); var vals = entries.map(function(e){return e[1];});
+    var labelsCortos = labels.map(function(l){return l.length>40?l.substring(0,38)+'…':l;});
     var maxVal = vals[0]||1;
-    body.innerHTML = '<table class="st-tabla"><thead><tr><th>#</th><th>Repartición</th><th>Cantidad</th><th>Dist.</th></tr></thead><tbody>'
-      +entries.map(function(e,i){
-        var pct=Math.round(e[1]/datos.length*100);
+    var tablaSuma = !entries.length ? '<div class="st-vacio">Sin datos</div>' :
+      '<table class="st-tabla"><thead><tr><th>#</th><th>Repartición</th><th>Cantidad</th><th>Dist.</th></tr></thead><tbody>'
+      +entries.map(function(e,i){ var pct=Math.round(e[1]/datosIn.length*100);
         return '<tr><td class="st-rank">'+(i+1)+'</td><td title="'+esc(e[0])+'">'+esc(e[0].length>50?e[0].substring(0,48)+'…':e[0])+'</td>'
           +'<td><b>'+e[1]+'</b></td><td><div class="st-bar-inline" style="width:'+Math.max(4,Math.round(e[1]/maxVal*80))+'px"></div> '+pct+'%</td></tr>';
       }).join('')+'</tbody></table>';
+    return { entries:entries, labels:labelsCortos, vals:vals, tablaSuma:tablaSuma,
+      canvasHtml:'<div class="st-canvas-wrap" style="height:'+Math.max(280,entries.length*32)+'px"><canvas id="canvas-organismo"></canvas></div>',
+      chartType:'bar', chartTypeCompare:'bar',
+      datasetsSuma:[{label:'Documentos',data:vals,backgroundColor:'rgba(26,138,155,.75)',borderColor:'#1a8a9b',borderWidth:1}] };
+  }
+
+  var todosLosDatos = grupos.reduce(function(acc,g){return acc.concat(g.datos);},[]);
+  var body = document.getElementById('mod-body-organismo');
+  if (!hayMultiple || modo === 'suma') {
+    var r = buildOrganismo(todosLosDatos);
+    if (!r.entries.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+    if (tipo==='tabla') { body.innerHTML=r.tablaSuma; return; }
+    body.innerHTML=r.canvasHtml;
+    stCrearChart('canvas-organismo','bar',r.labels,r.datasetsSuma,opcHoriz);
     return;
   }
-  body.innerHTML = '<div class="st-canvas-wrap" style="height:'+Math.max(280,entries.length*32)+'px"><canvas id="canvas-organismo"></canvas></div>';
-  // Abreviar labels largos
-  var labelsCortos = labels.map(function(l){return l.length>40?l.substring(0,38)+'…':l;});
-  stCrearChart('canvas-organismo', 'bar', labelsCortos, [{
-    label:'Documentos', data:vals, backgroundColor:'rgba(26,138,155,.75)', borderColor:'#1a8a9b', borderWidth:1
-  }], { indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{color:'#8fadb5',font:{size:9}}},y:{ticks:{color:'#8fadb5',font:{size:9}}}} });
+  stRenderComparacionGenerica('organismo','canvas-organismo',grupos,buildOrganismo,tipo,opcHoriz);
 }
 
 function stRenderNormativa(datos, tipo) {
   if(stCharts['canvas-normativa']) { try{stCharts['canvas-normativa'].destroy();}catch(e){} }
-  var cnt = {};
-  datos.forEach(function(d){
-    (d.normativa||'').split(',').forEach(function(n){
-      var nn=normalizarNorma(n.trim()); if(nn){cnt[nn]=(cnt[nn]||0)+1;}
-    });
-  });
-  var entries = Object.entries(cnt).sort(function(a,b){return b[1]-a[1];}).slice(0,12);
-  var labels = entries.map(function(e){return e[0];}); var vals = entries.map(function(e){return e[1];});
-  var body = document.getElementById('mod-body-normativa');
-  if (!entries.length) { body.innerHTML='<div class="st-vacio">Sin datos de normativa</div>'; return; }
-  if (tipo === 'tabla') {
-    body.innerHTML = '<table class="st-tabla"><thead><tr><th>#</th><th>Norma</th><th>Citas</th></tr></thead><tbody>'
-      +entries.map(function(e,i){return '<tr><td class="st-rank">'+(i+1)+'</td><td>'+esc(e[0])+'</td><td><b>'+e[1]+'</b></td></tr>';}).join('')
-      +'</tbody></table>';
-    return;
+  var grupos = stGetGrupos(datos); var modo = stGetModo('normativa'); var hayMultiple = grupos.length>1;
+  var opcHoriz = { indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{color:'#8fadb5',font:{size:9}}},y:{ticks:{color:'#8fadb5',font:{size:9}}}} };
+
+  function buildNorm(datosIn) {
+    var cnt = {};
+    datosIn.forEach(function(d){ (d.normativa||'').split(',').forEach(function(n){ var nn=normalizarNorma(n.trim()); if(nn){cnt[nn]=(cnt[nn]||0)+1;} }); });
+    var entries = Object.entries(cnt).sort(function(a,b){return b[1]-a[1];}).slice(0,12);
+    var labels = entries.map(function(e){return e[0];}); var vals = entries.map(function(e){return e[1];});
+    var labelsCortos = labels.map(function(l){return l.length>45?l.substring(0,43)+'…':l;});
+    return { entries:entries, labels:labelsCortos, vals:vals,
+      tablaSuma: !entries.length ? '<div class="st-vacio">Sin datos de normativa</div>' :
+        '<table class="st-tabla"><thead><tr><th>#</th><th>Norma</th><th>Citas</th></tr></thead><tbody>'
+        +entries.map(function(e,i){return '<tr><td class="st-rank">'+(i+1)+'</td><td>'+esc(e[0])+'</td><td><b>'+e[1]+'</b></td></tr>';}).join('')+'</tbody></table>',
+      canvasHtml:'<div class="st-canvas-wrap" style="height:'+Math.max(280,entries.length*32)+'px"><canvas id="canvas-normativa"></canvas></div>',
+      chartType:'bar', chartTypeCompare:'bar',
+      datasetsSuma:[{label:'Citas',data:vals,backgroundColor:'rgba(200,168,75,.75)',borderColor:'#c8a84b',borderWidth:1}] };
   }
-  body.innerHTML = '<div class="st-canvas-wrap" style="height:'+Math.max(280,entries.length*32)+'px"><canvas id="canvas-normativa"></canvas></div>';
-  var labelsCortos = labels.map(function(l){return l.length>45?l.substring(0,43)+'…':l;});
-  stCrearChart('canvas-normativa', 'bar', labelsCortos, [{
-    label:'Citas', data:vals, backgroundColor:'rgba(200,168,75,.75)', borderColor:'#c8a84b', borderWidth:1
-  }], { indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{color:'#8fadb5',font:{size:9}}},y:{ticks:{color:'#8fadb5',font:{size:9}}}} });
+
+  var body = document.getElementById('mod-body-normativa');
+  var todosLosDatos = grupos.reduce(function(acc,g){return acc.concat(g.datos);},[]);
+  if (!hayMultiple || modo === 'suma') {
+    var r = buildNorm(todosLosDatos);
+    if (!r.entries.length) { body.innerHTML='<div class="st-vacio">Sin datos de normativa</div>'; return; }
+    if (tipo==='tabla') { body.innerHTML=r.tablaSuma; return; }
+    body.innerHTML=r.canvasHtml; stCrearChart('canvas-normativa','bar',r.labels,r.datasetsSuma,opcHoriz); return;
+  }
+  stRenderComparacionGenerica('normativa','canvas-normativa',grupos,buildNorm,tipo,opcHoriz);
 }
 
 function stRenderSeguimiento(datos, tipo) {
   if(stCharts['canvas-seguimiento']) { try{stCharts['canvas-seguimiento'].destroy();}catch(e){} }
-  var seg = {pendiente:0, cumplido:0, sin_respuesta:0, sin_asignar:0};
-  datos.forEach(function(d){ var s=d.seguimiento||'sin_asignar'; if(seg[s]!==undefined) seg[s]++; });
+  var grupos = stGetGrupos(datos); var modo = stGetModo('seguimiento'); var hayMultiple = grupos.length > 1;
   var coloresSeg = {'pendiente':'#e67e22','cumplido':'#27ae60','sin_respuesta':'#c0392b','sin_asignar':'#7f8c8d'};
   var etiquetas  = {'pendiente':'⏳ Pendiente','cumplido':'✅ Cumplido','sin_respuesta':'❌ Sin respuesta','sin_asignar':'— Sin asignar'};
-  var labels = Object.keys(seg); var vals = labels.map(function(k){return seg[k];});
+  var KEYS = Object.keys(coloresSeg);
   var body = document.getElementById('mod-body-seguimiento');
+
+  function buildSeg(datosIn) {
+    var seg = {pendiente:0,cumplido:0,sin_respuesta:0,sin_asignar:0};
+    datosIn.forEach(function(d){ var s=d.seguimiento||'sin_asignar'; if(seg[s]!==undefined) seg[s]++; });
+    var labels = KEYS; var vals = KEYS.map(function(k){return seg[k];});
+    var etiqLabels = KEYS.map(function(k){return etiquetas[k];});
+    return { seg:seg, entries:KEYS.map(function(k){return [k,seg[k]];}), labels:etiqLabels, vals:vals,
+      tablaSuma:'<table class="st-tabla"><thead><tr><th>Estado</th><th>Cantidad</th><th>%</th></tr></thead><tbody>'
+        +KEYS.map(function(k){return '<tr><td>'+etiquetas[k]+'</td><td><b>'+seg[k]+'</b></td><td>'+Math.round(seg[k]/(datosIn.length||1)*100)+'%</td></tr>';}).join('')+'</tbody></table>',
+      canvasHtml:'<div class="st-canvas-wrap"><canvas id="canvas-seguimiento"></canvas></div>',
+      chartType: tipo==='torta'?'pie':'doughnut', chartTypeCompare:'bar',
+      datasetsSuma:[{data:vals,backgroundColor:KEYS.map(function(k){return coloresSeg[k];}),borderWidth:2,borderColor:'#0d1e22'}] };
+  }
+
+  var todosLosDatos = grupos.reduce(function(acc,g){return acc.concat(g.datos);},[]);
+
   if (tipo === 'indicadores') {
+    var seg = buildSeg(todosLosDatos).seg;
     body.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:8px 0">'
-      +labels.map(function(k){
+      +KEYS.map(function(k){
         return '<div style="background:var(--g2);border-radius:8px;padding:16px;text-align:center;border-bottom:3px solid '+coloresSeg[k]+'">'
           +'<div style="font-size:1.9rem;font-weight:700;color:'+coloresSeg[k]+';font-family:Georgia,serif">'+seg[k]+'</div>'
           +'<div style="font-size:.68rem;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.06em">'+etiquetas[k].replace(/^[^ ]+ /,'')+'</div>'
@@ -1973,65 +2268,271 @@ function stRenderSeguimiento(datos, tipo) {
       }).join('')+'</div>';
     return;
   }
-  if (tipo === 'tabla') {
-    body.innerHTML = '<table class="st-tabla"><thead><tr><th>Estado</th><th>Cantidad</th><th>%</th></tr></thead><tbody>'
-      +labels.map(function(k){return '<tr><td>'+etiquetas[k]+'</td><td><b>'+seg[k]+'</b></td><td>'+Math.round(seg[k]/datos.length*100)+'%</td></tr>';}).join('')
-      +'</tbody></table>';
+
+  if (!hayMultiple || modo === 'suma') {
+    var r = buildSeg(todosLosDatos);
+    if (tipo === 'tabla') { body.innerHTML = r.tablaSuma; return; }
+    body.innerHTML = r.canvasHtml;
+    stCrearChart('canvas-seguimiento', tipo==='torta'?'pie':'doughnut', r.labels, r.datasetsSuma);
     return;
   }
-  body.innerHTML = '<div class="st-canvas-wrap"><canvas id="canvas-seguimiento"></canvas></div>';
-  var ct = tipo==='torta'?'pie':'doughnut';
-  stCrearChart('canvas-seguimiento', ct,
-    labels.map(function(k){return etiquetas[k];}),
-    [{data:vals,backgroundColor:labels.map(function(k){return coloresSeg[k];}),borderWidth:2,borderColor:'#0d1e22'}]
-  );
+
+  // Comparación: barras agrupadas por estado
+  function buildSegCmp() {
+    var datasets = grupos.map(function(g,i){
+      var r = buildSeg(g.datos);
+      return { label:g.label, data:r.vals,
+        backgroundColor:COLORES_SERIES[i%COLORES_SERIES.length], borderColor:COLORES_BORDE[i%COLORES_BORDE.length], borderWidth:2 };
+    });
+    return { labels: KEYS.map(function(k){return etiquetas[k];}), datasets: datasets };
+  }
+
+  var etiqLabels = KEYS.map(function(k){return etiquetas[k];});
+
+  if (modo === 'comparacion') {
+    if (tipo === 'tabla') {
+      var thead='<tr><th>Estado</th>'+grupos.map(function(g){return '<th>'+g.label+'</th>';}).join('')+'</tr>';
+      var rows=KEYS.map(function(k){
+        return '<tr><td>'+etiquetas[k]+'</td>'+grupos.map(function(g){
+          var s={pendiente:0,cumplido:0,sin_respuesta:0,sin_asignar:0};
+          g.datos.forEach(function(d){var st=d.seguimiento||'sin_asignar';if(s[st]!==undefined)s[st]++;});
+          return '<td>'+s[k]+'</td>';
+        }).join('')+'</tr>';
+      }).join('');
+      body.innerHTML='<table class="st-tabla"><thead>'+thead+'</thead><tbody>'+rows+'</tbody></table>';
+    } else {
+      var cmp = buildSegCmp();
+      body.innerHTML='<div class="st-canvas-wrap"><canvas id="canvas-seguimiento"></canvas></div>';
+      stCrearChart('canvas-seguimiento','bar',cmp.labels,cmp.datasets,{});
+    }
+    return;
+  }
+
+  // Ambos
+  var rSum = buildSeg(todosLosDatos); var cmp = buildSegCmp();
+  if (tipo === 'tabla') {
+    body.innerHTML='<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin-bottom:6px">Suma</p>'+rSum.tablaSuma
+      +'<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin:10px 0 6px">Comparación</p>'
+      +'<table class="st-tabla"><thead><tr><th>Estado</th>'+grupos.map(function(g){return '<th>'+g.label+'</th>';}).join('')+'</tr></thead><tbody>'
+      +KEYS.map(function(k){return '<tr><td>'+etiquetas[k]+'</td>'+grupos.map(function(g){
+        var s={pendiente:0,cumplido:0,sin_respuesta:0,sin_asignar:0};
+        g.datos.forEach(function(d){var st=d.seguimiento||'sin_asignar';if(s[st]!==undefined)s[st]++;});
+        return '<td>'+s[k]+'</td>';
+      }).join('')+'</tr>';}).join('')+'</tbody></table>';
+    return;
+  }
+  body.innerHTML='<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin-bottom:6px">Suma</p>'
+    +'<div class="st-canvas-wrap"><canvas id="cv-seg-s"></canvas></div>'
+    +'<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin:14px 0 6px">Comparación</p>'
+    +'<div class="st-canvas-wrap"><canvas id="cv-seg-c"></canvas></div>';
+  stCrearChart('cv-seg-s',tipo==='torta'?'pie':'doughnut',rSum.labels,rSum.datasetsSuma);
+  stCrearChart('cv-seg-c','bar',cmp.labels,cmp.datasets,{});
 }
 
 function stRenderEvolucion(datos, tipo) {
   if(stCharts['canvas-evolucion']) { try{stCharts['canvas-evolucion'].destroy();}catch(e){} }
-  // Evolución por año: apilado por tipo de documento
-  var anios = [...new Set(TODOS.map(function(d){return String(d.anio||'');}).filter(Boolean))].sort();
-  var tipos = ['Dictamen','Despacho','Dictamen Información Pública','Providencia'];
+  var grupos = stGetGrupos(datos); var modo = stGetModo('evolucion'); var hayMultiple = grupos.length > 1;
+  var aniosTodos = [...new Set(TODOS.map(function(d){return String(d.anio||'');}).filter(Boolean))].sort();
+  var TIPOS_DOC = ['Dictamen','Despacho','Dictamen Información Pública','Providencia'];
   var colorTipos = {'Dictamen':'rgba(26,138,155,.8)','Despacho':'rgba(200,168,75,.8)','Dictamen Información Pública':'rgba(39,174,96,.8)','Providencia':'rgba(142,68,173,.8)'};
   var body = document.getElementById('mod-body-evolucion');
-  if (!anios.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
-  if (tipo === 'tabla') {
-    body.innerHTML = '<div style="overflow-x:auto"><table class="st-tabla"><thead><tr><th>Año</th>'
-      +tipos.map(function(t){return '<th>'+t.replace('Dictamen Información Pública','Inf.Pública')+'</th>';}).join('')
+  var escOpc = { scales:{x:{stacked:tipo==='barras',ticks:{color:'#8fadb5'}},y:{stacked:tipo==='barras',ticks:{color:'#8fadb5'},beginAtZero:true}} };
+
+  // Años presentes en el subconjunto de datos
+  function aniosPresentes(dat) {
+    return [...new Set(dat.map(function(d){return String(d.anio||'');}).filter(Boolean))].sort();
+  }
+
+  function buildDatasets(dat, anios) {
+    return TIPOS_DOC.map(function(t,i){
+      var dvals = anios.map(function(a){
+        return dat.filter(function(d){return String(d.anio||'')===a && (d.tipo_documento||'')===t;}).length;
+      });
+      return { label:t.replace('Dictamen Información Pública','Inf.Pública'), data:dvals,
+        backgroundColor:colorTipos[t]||ST_COLORES[i],
+        borderColor:(colorTipos[t]||ST_COLORES[i]).replace('.8','.95'),
+        borderWidth:tipo==='linea'?2:1, fill:false, tension:0.3,
+        stack:tipo==='barras'?'stack':undefined };
+    }).filter(function(ds){return ds.data.some(function(v){return v>0;});});
+  }
+
+  function renderTablaEvolucion(dat, anios) {
+    return '<div style="overflow-x:auto"><table class="st-tabla"><thead><tr><th>Año</th>'
+      +TIPOS_DOC.map(function(t){return '<th>'+t.replace('Dictamen Información Pública','Inf.Pública')+'</th>';}).join('')
       +'<th>Total</th></tr></thead><tbody>'
       +anios.map(function(a){
-        var fila = datos.filter(function(d){return String(d.anio||'')===a;});
+        var fila=dat.filter(function(d){return String(d.anio||'')===a;});
         if(!fila.length) return '';
-        var celdas = tipos.map(function(t){return '<td>'+fila.filter(function(d){return (d.tipo_documento||''===t);}).length+'</td>';}).join('');
-        return '<tr><td><b>'+a+'</b></td>'+celdas+'<td><b>'+fila.length+'</b></td></tr>';
+        return '<tr><td><b>'+a+'</b></td>'
+          +TIPOS_DOC.map(function(t){return '<td>'+fila.filter(function(d){return (d.tipo_documento||'')===t;}).length+'</td>';}).join('')
+          +'<td><b>'+fila.length+'</b></td></tr>';
       }).join('')+'</tbody></table></div>';
+  }
+
+  if (!aniosTodos.length) { body.innerHTML='<div class="st-vacio">Sin datos</div>'; return; }
+
+  // Sin selección múltiple o modo suma → comportamiento original
+  if (!hayMultiple || modo === 'suma') {
+    var anios = aniosPresentes(datos);
+    if (tipo === 'tabla') { body.innerHTML = renderTablaEvolucion(datos, anios); return; }
+    body.innerHTML = '<div class="st-canvas-wrap" style="height:300px"><canvas id="canvas-evolucion"></canvas></div>';
+    stCrearChart('canvas-evolucion', tipo==='linea'?'line':'bar', anios, buildDatasets(datos, anios), escOpc);
     return;
   }
-  body.innerHTML = '<div class="st-canvas-wrap" style="height:300px"><canvas id="canvas-evolucion"></canvas></div>';
-  var datasets = tipos.map(function(t,i){
-    var dvals = anios.map(function(a){
-      return datos.filter(function(d){return String(d.anio||'')===a && (d.tipo_documento||'')=== t;}).length;
+
+  // Comparación: un gráfico de línea/barra por grupo, mostrando totales por año
+  function renderCmpEvolucion(canvasId) {
+    var allAnios = [...new Set(grupos.reduce(function(acc,g){return acc.concat(aniosPresentes(g.datos));},[])) ].sort();
+    var datasets = grupos.map(function(g,i){
+      return { label:g.label, data:allAnios.map(function(a){return g.datos.filter(function(d){return String(d.anio||'')===a;}).length;}),
+        backgroundColor:COLORES_SERIES[i%COLORES_SERIES.length], borderColor:COLORES_BORDE[i%COLORES_BORDE.length],
+        borderWidth:2, fill:false, tension:0.3 };
     });
-    return { label: t.replace('Dictamen Información Pública','Inf.Pública'), data: dvals,
-      backgroundColor: colorTipos[t]||ST_COLORES[i],
-      borderColor: (colorTipos[t]||ST_COLORES[i]).replace('.8','.95'),
-      borderWidth: tipo==='linea'?2:1, fill: tipo==='linea'?false:true,
-      tension: 0.3, stack: tipo==='barras'?'stack':undefined
-    };
-  }).filter(function(ds){return ds.data.some(function(v){return v>0;});});
-  stCrearChart('canvas-evolucion', tipo==='linea'?'line':'bar', anios, datasets, { scales:{x:{stacked:tipo==='barras',ticks:{color:'#8fadb5'}},y:{stacked:tipo==='barras',ticks:{color:'#8fadb5'},beginAtZero:true}} });
+    return { anios:allAnios, datasets:datasets,
+      html:'<div class="st-canvas-wrap" style="height:300px"><canvas id="'+canvasId+'"></canvas></div>' };
+  }
+
+  if (modo === 'comparacion') {
+    if (tipo === 'tabla') {
+      // Tabla comparativa: años × grupos (totales)
+      var allAnios=[...new Set(grupos.reduce(function(acc,g){return acc.concat(aniosPresentes(g.datos));},[])) ].sort();
+      var thead='<tr><th>Año</th>'+grupos.map(function(g){return '<th>'+g.label+'</th>';}).join('')+'</tr>';
+      var rows=allAnios.map(function(a){
+        return '<tr><td><b>'+a+'</b></td>'+grupos.map(function(g){
+          return '<td>'+g.datos.filter(function(d){return String(d.anio||'')===a;}).length+'</td>';
+        }).join('')+'</tr>';
+      }).join('');
+      body.innerHTML='<div style="overflow-x:auto"><table class="st-tabla"><thead>'+thead+'</thead><tbody>'+rows+'</tbody></table></div>';
+    } else {
+      var cmp = renderCmpEvolucion('canvas-evolucion');
+      body.innerHTML = cmp.html;
+      stCrearChart('canvas-evolucion', tipo==='linea'?'line':'bar', cmp.anios, cmp.datasets, escOpc);
+    }
+    return;
+  }
+
+  // Ambos
+  var aniosSum = aniosPresentes(datos); var cmp = renderCmpEvolucion('cv-evol-c');
+  if (tipo === 'tabla') {
+    body.innerHTML='<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin-bottom:6px">Suma</p>'
+      +renderTablaEvolucion(datos,aniosSum)
+      +'<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin:10px 0 6px">Comparación (totales por grupo)</p>'
+      +cmp.html.replace('canvas-evolucion','cv-evol-c-tbl');
+    return;
+  }
+  body.innerHTML='<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin-bottom:6px">Suma (por tipo)</p>'
+    +'<div class="st-canvas-wrap" style="height:280px"><canvas id="cv-evol-s"></canvas></div>'
+    +'<p style="font-size:.75rem;color:var(--tl);font-weight:600;margin:14px 0 6px">Comparación (por grupo)</p>'
+    +cmp.html;
+  stCrearChart('cv-evol-s',tipo==='linea'?'line':'bar',aniosSum,buildDatasets(datos,aniosSum),escOpc);
+  stCrearChart('cv-evol-c',tipo==='linea'?'line':'bar',cmp.anios,cmp.datasets,escOpc);
 }
 
-// Registrar los renderizadores
-stModRenderers['anio']        = stRenderAnio;
-stModRenderers['tipo']        = stRenderTipo;
-stModRenderers['despacho']    = stRenderDespacho;
-stModRenderers['organismo']   = stRenderOrganismo;
+
+// ── Multiselect ──────────────────────────────────────
+function msToggle(id) {
+  var drop = document.getElementById('ms-'+id+'-drop');
+  var btn  = document.getElementById('ms-'+id+'-btn');
+  var isOpen = drop.classList.contains('open');
+  document.querySelectorAll('.ms-dropdown').forEach(function(d){ d.classList.remove('open'); });
+  document.querySelectorAll('.ms-btn').forEach(function(b){ b.classList.remove('open'); });
+  if (!isOpen) { drop.classList.add('open'); btn.classList.add('open'); }
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.ms-wrap')) {
+    document.querySelectorAll('.ms-dropdown').forEach(function(d){ d.classList.remove('open'); });
+    document.querySelectorAll('.ms-btn').forEach(function(b){ b.classList.remove('open'); });
+  }
+});
+function msGetSeleccionados(id) {
+  var cbs = document.querySelectorAll('.ms-'+id+'-cb:checked');
+  return Array.from(cbs).map(function(c){ return c.value; });
+}
+function msActualizarLabel(id) {
+  var sel = msGetSeleccionados(id);
+  var lbl = document.getElementById('ms-'+id+'-label');
+  var all = document.getElementById('ms-'+id+'-all');
+  var total = document.querySelectorAll('.ms-'+id+'-cb').length;
+  if (sel.length === 0 || sel.length === total) {
+    lbl.textContent = id === 'anio' ? 'Todos los años' : 'Todos los tipos';
+    if (all) all.checked = true;
+  } else if (sel.length === 1) {
+    lbl.textContent = sel[0];
+    if (all) all.checked = false;
+  } else {
+    lbl.textContent = sel.length + ' seleccionados';
+    if (all) all.checked = false;
+  }
+}
+function msCambio(id) { msActualizarLabel(id); renderStats(); }
+function msToggleAll(id) {
+  document.querySelectorAll('.ms-'+id+'-cb').forEach(function(c){ c.checked = false; });
+  msActualizarLabel(id); renderStats();
+}
+function msLimpiar(id) {
+  document.querySelectorAll('.ms-'+id+'-cb').forEach(function(c){ c.checked = false; });
+  var all = document.getElementById('ms-'+id+'-all');
+  if (all) all.checked = true;
+  msActualizarLabel(id);
+}
+
+// ── Modo de visualización por módulo ──────────────────
+var stModoViz = {};
+function stGetModo(modId) { return stModoViz[modId] || 'suma'; }
+function stCambiarModo(modId, modo) {
+  stModoViz[modId] = modo;
+  document.querySelectorAll('[data-modo-mod="'+modId+'"]').forEach(function(b){
+    b.classList.toggle('on', b.dataset.modo === modo);
+  });
+  var datos = stGetDatos();
+  stModRenderers[modId](datos, stTiposActivos[modId]);
+}
+function stBotonesModo(modId) {
+  var anios = msGetSeleccionados('anio');
+  var tipos = msGetSeleccionados('tipo');
+  var hayMultiple = anios.length > 1 || tipos.length > 1;
+  if (!hayMultiple) return '';
+  var modo = stGetModo(modId);
+  return '<div class="st-modo-datos">'
+    +'<button class="st-modo-btn'+(modo==='suma'?' on':'')+'" data-modo-mod="'+modId+'" data-modo="suma" onclick="stCambiarModo(\''+modId+'\',\'suma\')" title="Suma todos los datos seleccionados">∑ Suma</button>'
+    +'<button class="st-modo-btn'+(modo==='comparacion'?' on':'')+'" data-modo-mod="'+modId+'" data-modo="comparacion" onclick="stCambiarModo(\''+modId+'\',\'comparacion\')" title="Compara cada selección por separado">⇄ Comparar</button>'
+    +'<button class="st-modo-btn'+(modo==='ambos'?' on':'')+'" data-modo-mod="'+modId+'" data-modo="ambos" onclick="stCambiarModo(\''+modId+'\',\'ambos\')" title="Muestra comparación y suma">⊞ Ambos</button>'
+    +'</div>';
+}
+
+// ── Grupos para comparación ───────────────────────────
+function stGetGrupos(datos) {
+  var anios = msGetSeleccionados('anio');
+  var tipos = msGetSeleccionados('tipo');
+  if (anios.length <= 1 && tipos.length <= 1) {
+    var label = (anios.length===1?anios[0]:'') + (tipos.length===1?' '+tipos[0]:'') || 'Total';
+    return [{ label: label.trim()||'Total', datos: datos }];
+  }
+  var grupos = [];
+  if (anios.length > 1) {
+    anios.forEach(function(a){
+      grupos.push({ label: a, datos: datos.filter(function(d){ return String(d.anio||'')===a; }) });
+    });
+  } else if (tipos.length > 1) {
+    tipos.forEach(function(t){
+      grupos.push({ label: t, datos: datos.filter(function(d){ return (d.tipo_documento||'')===t; }) });
+    });
+  }
+  return grupos;
+}
+
+var COLORES_SERIES = [
+  'rgba(26,138,155,.8)','rgba(200,168,75,.8)','rgba(39,174,96,.8)',
+  'rgba(192,57,43,.8)','rgba(142,68,173,.8)','rgba(52,152,219,.8)',
+  'rgba(230,126,34,.8)','rgba(26,188,156,.8)'
+];
+var COLORES_BORDE = [
+  '#1a8a9b','#c8a84b','#27ae60','#c0392b','#8e44ad','#3498db','#e67e22','#1abc9c'
+];
+
 stModRenderers['normativa']   = stRenderNormativa;
 stModRenderers['seguimiento'] = stRenderSeguimiento;
 stModRenderers['evolucion']   = stRenderEvolucion;
-
-// ── Render principal ──────────────────────────────────
 function renderStats() {
   stDestruirCharts();
   var datos = stGetDatos();
@@ -2044,12 +2545,14 @@ function renderStats() {
 
   // Badge de contexto
   var partes = [];
-  var vAnio = document.getElementById('st-f-anio').value;
-  var vTipo = document.getElementById('st-f-tipo').value;
+  var vAnios = msGetSeleccionados('anio');
+  var vTipos = msGetSeleccionados('tipo');
   var vOrg  = document.getElementById('st-f-org').value;
   var vTxt  = document.getElementById('st-f-texto').value.trim();
-  if (vAnio) partes.push('Año ' + vAnio);
-  if (vTipo) partes.push(vTipo);
+  if (vAnios.length === 1) partes.push('Año ' + vAnios[0]);
+  else if (vAnios.length > 1) partes.push(vAnios.join(', '));
+  if (vTipos.length === 1) partes.push(vTipos[0]);
+  else if (vTipos.length > 1) partes.push(vTipos.join(' + '));
   if (vOrg)  partes.push(vOrg.length>40?vOrg.substring(0,38)+'…':vOrg);
   if (vTxt)  partes.push('"'+vTxt+'"');
   var badge = document.getElementById('st-badge');
@@ -2100,14 +2603,14 @@ function stCambiarTipo(modId, tipo) {
 }
 
 function limpiarFiltrosStats() {
-  document.getElementById('st-f-anio').value  = '';
-  document.getElementById('st-f-tipo').value  = '';
+  msLimpiar('anio');
+  msLimpiar('tipo');
   document.getElementById('st-f-org').value   = '';
   document.getElementById('st-f-texto').value = '';
   renderStats();
 }
 
-// ── Poblar select de organismos ──────────────────────
+// ── Poblar select de organismos y multiselect de años ──────────────────────
 function stPoblarOrganismos() {
   var sel = document.getElementById('st-f-org');
   if (!sel) return;
@@ -2119,10 +2622,15 @@ function stPoblarOrganismos() {
     opt.value = o; opt.textContent = o.length>60?o.substring(0,58)+'…':o; opt.title = o;
     sel.appendChild(opt);
   });
-  // Años
-  var selAnio = document.getElementById('st-f-anio');
+  // Poblar multiselect de años
+  var drop = document.getElementById('ms-anio-drop');
   var anios = [...new Set(TODOS.map(function(d){return String(d.anio||'');}).filter(Boolean))].sort();
-  anios.forEach(function(a){ var opt=document.createElement('option'); opt.value=a; opt.textContent=a; selAnio.appendChild(opt); });
+  anios.forEach(function(a){
+    var lbl = document.createElement('label');
+    lbl.className = 'ms-item';
+    lbl.innerHTML = '<input type="checkbox" class="ms-anio-cb" value="'+a+'" onchange="msCambio(\'anio\')"><span>'+a+'</span>';
+    drop.appendChild(lbl);
+  });
 }
 
 // ── Toggle panel ──────────────────────────────────────
@@ -2325,15 +2833,130 @@ function generarPDFEstadisticas(items, titulo, subtitulo) {
 function normalizarOrganismo(o) {
   if(!o) return 'Sin datos';
   o = o.trim();
-  // Todas las variantes de la Oficina propia → nombre canónico
-  if(/oficina de investigaciones administrativas/i.test(o)) return 'Oficina de Investigaciones Administrativas y Ética Pública';
-  if(/direcci[oó]n de investigaciones administrativas y [eé]tica/i.test(o)) return 'Dirección de Investigaciones Administrativas y Ética Pública';
-  if(/direcci[oó]n de investigaciones administrativas y asuntos/i.test(o)) return 'Dirección de Investigaciones Administrativas y Asuntos Judiciales';
-  if(/direcci[oó]n general de escuelas/i.test(o)) return 'Dirección General de Escuelas';
+
+  // ── OIAYEP / Ética Pública (todo junto) ──
+  if(/oiay?ep|oficina de investigaciones administrativas|oficina de [eé]tica p[uú]blica|auditor[ií]a de [eé]tica p[uú]blica|auditor[ií]a general.*[eé]tica|[eé]tica p[uú]blica mendoza|direcci[oó]n de [eé]tica p[uú]blica|sub.?direcci[oó]n de acceso a la informaci[oó]n p[uú]blica|subdirecci[oó]n de acceso a la informaci[oó]n|oficina de informaci[oó]n p[uú]blica.*mendoza|oficina de informaci[oó]n y acceso|[eé]ticas p[uú]blica mendoza/i.test(o))
+    return 'OIAYEP / Ética Pública Mendoza';
+
+  // ── Dirección de Investigaciones Administrativas (nombre histórico) ──
+  if(/direcci[oó]n de investigaciones administrativas/i.test(o)) return 'Dirección de Investigaciones Administrativas';
+
+  // ── Poder Judicial (SCJM, Ministerio Público Fiscal, Defensa) ──
+  if(/suprema corte de justicia|poder judicial|ministerio p[uú]blico fiscal|junta electoral.*pcial|scjm|ministro de la defensa|defensa.*(y )?pupilar|ministerio.*pupilar/i.test(o))
+    return 'Poder Judicial de Mendoza';
+
+  // ── Hospitales provinciales ──
+  if(/^hospital /i.test(o)) return 'Hospitales Provinciales';
+
+  // ── ATM – Administración Tributaria Mendoza ──
+  if(/administraci[oó]n tributaria.*mendoza|ATM.*administraci[oó]n tributaria|Administraci[oó]n Tributaria \(ATM\)/i.test(o))
+    return 'Administración Tributaria Mendoza (ATM)';
+  // ATM Autoridad Metropolitana → etiqueta separada si aparece sola
+  if(/autoridad metropolitana de transporte/i.test(o)) return 'Autoridad Metropolitana de Transporte';
+
+  // ── OSEP ──
+  if(/osep|obra social.*empleados p[uú]blicos|obra social del estado provincial/i.test(o))
+    return 'OSEP — Obra Social del Estado Provincial';
+
+  // ── DINAF / Responsabilidad Penal Juvenil ──
+  if(/dinaf|direcci[oó]n de ni[ñn]ez|direcci[oó]n de responsabilidad penal juvenil|responsabilidad penal juvenil/i.test(o))
+    return 'DINAF';
+
+  // ── Servicio Penitenciario ──
+  if(/servicio penitenciario|penitenciar[ií]a provincial|complejo penitenciario/i.test(o))
+    return 'Servicio Penitenciario Provincial';
+
+  // ── Departamento General de Irrigación ──
+  if(/d\.?g\.? irrigaci[oó]n|departamento general de irrigaci[oó]n/i.test(o))
+    return 'Departamento General de Irrigación';
+
+  // ── Dirección General de Escuelas ──
+  if(/direcci[oó]n general de escuelas|direcci[oó]n general de educaci[oó]n/i.test(o))
+    return 'Dirección General de Escuelas';
+
+  // ── Secretaría / Ministerio de Ambiente ──
+  if(/secretar[ií]a de ambiente y ordenamiento|ministerio de ambiente/i.test(o))
+    return 'Secretaría de Ambiente y Ordenamiento Territorial';
+
+  // ── Dirección de Recursos Naturales Renovables ──
+  if(/direcci[oó]n de recursos naturales renovables/i.test(o))
+    return 'Dirección de Recursos Naturales Renovables';
+
+  // ── EPAS ──
+  if(/epas|ente provincial de agua y saneamiento/i.test(o))
+    return 'EPAS — Ente Provincial de Agua y Saneamiento';
+
+  // ── EPRE ──
+  if(/epre|ente provincial regulador el[eé]ctrico/i.test(o))
+    return 'EPRE — Ente Provincial Regulador Eléctrico';
+
+  // ── Instituto Provincial de Vivienda ──
+  if(/instituto provincial de la? vivienda|ipv/i.test(o))
+    return 'Instituto Provincial de Vivienda (IPV)';
+
+  // ── Instituto Provincial de Juegos y Casinos ──
+  if(/instituto provincial de juegos|casino de mendoza/i.test(o))
+    return 'Instituto Provincial de Juegos y Casinos';
+
+  // ── ISCAMEN ──
+  if(/iscamen|instituto de sanidad y calidad agropecuaria/i.test(o))
+    return 'ISCAMEN';
+
+  // ── Dirección Provincial de Vialidad ──
+  if(/direcci[oó]n provincial de vialidad/i.test(o))
+    return 'Dirección Provincial de Vialidad';
+
+  // ── Fiscalía de Estado ──
+  if(/fiscal[ií]a de estado/i.test(o))
+    return 'Fiscalía de Estado';
+
+  // ── Tribunal de Cuentas ──
+  if(/tribunal de cuentas/i.test(o))
+    return 'Honorable Tribunal de Cuentas';
+
+  // ── Cámara de Diputados ──
+  if(/c[aá]mara de diputados/i.test(o))
+    return 'Cámara de Diputados';
+
+  // ── Cámara de Senadores ──
+  if(/c[aá]mara de senadores|senado de mendoza|h\.?c\.? senadores/i.test(o))
+    return 'Cámara de Senadores';
+
+  // ── Ministerios (limpiar sufijos pero NO agrupar entre épocas) ──
   if(/ministerio de salud.*desarrollo social/i.test(o)) return 'Ministerio de Salud, Desarrollo Social y Deportes';
   if(/ministerio de econom[ií]a.*infraestructura/i.test(o)) return 'Ministerio de Economía, Infraestructura y Energía';
-  if(/instituto provincial de juegos/i.test(o)) return 'Instituto Provincial de Juegos y Casinos';
-  // Limpiar sufijos comunes
+  if(/ministerio de hacienda y finanzas/i.test(o)) return 'Ministerio de Hacienda y Finanzas';
+  if(/ministerio de hacienda/i.test(o) && !/finanzas/i.test(o)) return 'Ministerio de Hacienda';
+  if(/ministerio de seguridad y justicia/i.test(o)) return 'Ministerio de Seguridad y Justicia';
+  if(/ministerio de justicia y seguridad/i.test(o)) return 'Ministerio de Justicia y Seguridad';
+  if(/ministerio de seguridad/i.test(o) && !/justicia/i.test(o)) return 'Ministerio de Seguridad';
+  if(/ministerio de gobierno.*infraestructura/i.test(o)) return 'Ministerio de Gobierno, Infraestructura y Desarrollo Territorial';
+  if(/ministerio de gobierno.*trabajo/i.test(o)) return 'Ministerio de Gobierno, Trabajo y Justicia';
+  if(/ministerio de gobierno/i.test(o)) return 'Ministerio de Gobierno';
+  if(/ministerio de energ[ií]a y ambiente/i.test(o)) return 'Ministerio de Energía y Ambiente';
+  if(/ministerio de planificaci[oó]n/i.test(o)) return 'Ministerio de Planificación e Infraestructura';
+  if(/ministerio de salud y deportes/i.test(o) && !/desarrollo/i.test(o)) return 'Ministerio de Salud y Deportes';
+  if(/ministerio de salud/i.test(o) && !/desarrollo/i.test(o) && !/deportes/i.test(o)) return 'Ministerio de Salud';
+  if(/ministerio p[uú]blico fiscal/i.test(o)) return 'Poder Judicial de Mendoza';
+
+  // ── Municipios (limpiar variantes del mismo municipio) ──
+  if(/municipalidad.*ciudad.*mendoza|municipio.*ciudad.*mendoza|municipalidad de mendoza(?!\s*-\s*\w)|municipio de mendoza/i.test(o))
+    return 'Municipalidad de Mendoza';
+  if(/municipalidad de godoy cruz|municipio de godoy cruz/i.test(o)) return 'Municipalidad de Godoy Cruz';
+  if(/municipalidad de maip[uú]|municipio de maip[uú]/i.test(o)) return 'Municipalidad de Maipú';
+  if(/municipalidad de san rafael|municipio de san rafael/i.test(o)) return 'Municipalidad de San Rafael';
+  if(/municipalidad de tunyán|municipalidad de tuny[aá]n|municipio de tuny[aá]n/i.test(o)) return 'Municipalidad de Tunuyán';
+  if(/municipalidad.*tun[uú][iy][aá]n|municipio.*tun[uú][iy][aá]n/i.test(o)) return 'Municipalidad de Tunuyán';
+  if(/municipalidad de san carlos|municipio de san carlos/i.test(o)) return 'Municipalidad de San Carlos';
+  if(/municipalidad.*lu[ij][aá]n de cuyo|municipio.*lu[ij][aá]n de cuyo/i.test(o)) return 'Municipalidad de Luján de Cuyo';
+  if(/municipalidad.*malarg[uü][eé]|municipio.*malarg[uü][eé]/i.test(o)) return 'Municipalidad de Malargüe';
+  if(/municipalidad de santa rosa|municipio de santa rosa/i.test(o)) return 'Municipalidad de Santa Rosa';
+  if(/municipalidad de la paz/i.test(o)) return 'Municipalidad de La Paz';
+  if(/municipalidad de jun[ií]n/i.test(o)) return 'Municipalidad de Junín';
+  if(/municipalidad de las heras/i.test(o)) return 'Municipalidad de Las Heras';
+  if(/municipalidad de general alvear/i.test(o)) return 'Municipalidad de General Alvear';
+
+  // ── Limpiar sufijos comunes ──
   o = o.replace(/[,;]\s*(Provincia de Mendoza|de Mendoza|de la Provincia de Mendoza)\s*$/i, '');
   o = o.replace(/\s*\(OIAyEP\)|\s*\(OIAYEP\)|\s*\(OIAEyP\)/gi, '');
   return o.trim();
