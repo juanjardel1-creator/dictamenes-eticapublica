@@ -637,8 +637,7 @@ async function hacerLogin() {
     btn.disabled = false; btn.textContent = 'Ingresar';
     return;
   }
-  document.getElementById('login-email').addEventListener('keydown', function(e){ if(e.key==='Enter') hacerLogin(); });
-  document.getElementById('login-pass').addEventListener('keydown', function(e){ if(e.key==='Enter') hacerLogin(); });
+  mostrarApp(data.user);
 }
 
 async function cerrarSesion() {
@@ -2519,6 +2518,10 @@ var COLORES_BORDE = [
   '#1a8a9b','#c8a84b','#27ae60','#c0392b','#8e44ad','#3498db','#e67e22','#1abc9c'
 ];
 
+stModRenderers['anio']        = stRenderAnio;
+stModRenderers['tipo']        = stRenderTipo;
+stModRenderers['despacho']    = stRenderDespacho;
+stModRenderers['organismo']   = stRenderOrganismo;
 stModRenderers['normativa']   = stRenderNormativa;
 stModRenderers['seguimiento'] = stRenderSeguimiento;
 stModRenderers['evolucion']   = stRenderEvolucion;
@@ -2580,15 +2583,6 @@ function renderStats() {
     stRenderSeguimiento(datos, stTiposActivos.seguimiento);
     stRenderEvolucion(datos,   stTiposActivos.evolucion);
   }, 50);
-}
-
-function stCambiarTipo(modId, tipo) {
-  stTiposActivos[modId] = tipo;
-  var btns = document.querySelectorAll('[data-mod="'+modId+'"]');
-  btns.forEach(function(b){ b.classList.remove('on'); });
-  event.target.classList.add('on');
-  var datos = stGetDatos();
-  stModRenderers[modId](datos, tipo);
 }
 
 function limpiarFiltrosStats() {
